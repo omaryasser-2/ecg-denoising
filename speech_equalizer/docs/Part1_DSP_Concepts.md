@@ -1,6 +1,6 @@
-# Part 1: The Foundational DSP & Audio Concepts
+# Speech Equalizer: Part 1 - DSP & Audio Concepts
 
-Before we touch a single line of MATLAB code, we need to build up every concept from absolute zero. By the end of this section, you will understand what an equalizer is mathematically, how filters work, what "dB" means, and what happens when you change the speed at which audio is recorded. Let's begin.
+> **Learning Guide:** Before we touch a single line of MATLAB code, we need to build up every concept from absolute zero. By the end of this section, you will understand what an equalizer is mathematically, how filters work, what "dB" means, and what happens when you change the speed at which audio is recorded. Let's begin.
 
 ---
 
@@ -111,6 +111,9 @@ Input Signal x(t)
 
 Each "Band Filter" is a **bandpass filter** — a filter that only allows frequencies within a specific range to pass through and blocks everything outside that range. The output of each bandpass filter is a version of the original audio that contains *only* the frequencies in that band.
 
+![All 7 Frequency Bands](../figures/fig01_all_magnitudes.png)
+*Figure 1: The Magnitude Response of our 7-Band Filter Bank. You can clearly see the 7 distinct "hills", each representing one isolated frequency band ready to be adjusted.*
+
 Then each band is multiplied by its gain. If the gain is > 1, that band gets louder (**boosted**). If the gain is < 1, that band gets quieter (**cut**). If the gain is exactly 1, the band is unchanged.
 
 Finally, all seven modified bands are summed together. Since the bands cover the entire audible spectrum without gaps, the sum reconstructs a complete audio signal — but now with the frequency balance adjusted according to the gains.
@@ -172,8 +175,6 @@ y[n] = b₀·x[n] + b₁·x[n-1] + b₂·x[n-2] + ... + bₙ·x[n-N]
 
 It only looks at the current and past **N input values**. It never feeds its own output back into the equation.
 
-**Why "Finite Impulse Response"?** Imagine feeding a single spike (value 1 at time 0, value 0 everywhere else) into the filter. The output will be the `b` coefficients themselves, one by one: `b₀, b₁, b₂, ..., bₙ`. After N+1 samples, the output becomes zero forever. The "impulse response" (the output when you feed in a spike) is **finite** in length.
-
 **Properties of FIR filters:**
 
 1. **Always Stable**: Since there is no feedback loop, the output can never grow uncontrollably. No matter what input you give it, the output stays bounded. This is a huge safety advantage.
@@ -191,8 +192,6 @@ y[n] = b₀·x[n] + b₁·x[n-1] + ... - a₁·y[n-1] - a₂·y[n-2] - ...
 ```
 
 It uses its own past outputs in the computation. This feedback loop is what gives IIR filters their power — and their risks.
-
-**Why "Infinite Impulse Response"?** Feed in a single spike. The feedback causes the output to decay exponentially, but it theoretically never reaches exactly zero. The impulse response is **infinite** in duration (though it gets vanishingly small very quickly for a well-designed, stable filter).
 
 **Properties of IIR filters:**
 
@@ -213,6 +212,9 @@ With a **linear-phase FIR filter**, all of these frequency components are delaye
 With a **non-linear-phase IIR filter**, the low-frequency components of the vowel might be delayed more than the high-frequency components of the consonants. The "t" burst might arrive slightly earlier relative to the "a" than it should. This causes a subtle **smearing** or **pre-ringing** effect. For most listeners, this is nearly imperceptible on speech — the human auditory system is remarkably insensitive to phase changes. However, in careful A/B testing, some people report that IIR-filtered speech sounds slightly "different" or "less crisp."
 
 **The fix: `filtfilt`**. Your code uses a MATLAB trick: when IIR is selected, it calls `filtfilt` instead of `filter`. This function filters the signal forward, then flips it and filters it backward. The forward phase shift and backward phase shift cancel perfectly, resulting in **zero phase distortion**. The output is not shifted in time at all, and the waveform shape is perfectly preserved. The catch is that `filtfilt` doubles the effective filter order (a 4th-order filter acts like an 8th-order one) and requires the entire signal upfront (no real-time processing).
+
+![Time Domain Comparison](../figures/fig10_time_compare.png)
+*Figure 2: Time Domain Comparison. Top is the raw speech waveform. Bottom is the Equalized waveform. Notice how the overall amplitude envelope is similar, but the dense, high-frequency details (the fine scribbles) are enhanced due to our clarity boosts.*
 
 ---
 
@@ -344,24 +346,3 @@ To reduce these ripples, we multiply the truncated impulse response by a **windo
 ### How does this affect the equalizer?
 
 With a **Hamming window**, the borders between your 7 frequency bands will be reasonably sharp with good out-of-band rejection. With a **Blackman window**, the borders will be less sharp, but each band will have even less contamination from adjacent bands. The choice depends on whether you prioritize sharpness or purity.
-
----
-
-## 1.11 Summary of Concepts
-
-Before reading the code, make sure you're comfortable with these ideas:
-
-| Concept | One-Sentence Summary |
-|---|---|
-| **Sound** | Pressure vibrations converted to an array of numbers by a microphone + ADC. |
-| **Sampling Rate (fs)** | How many numbers per second are in the array. |
-| **Nyquist Frequency** | fs/2 — the highest frequency the digital audio can represent. |
-| **Aliasing** | Fake frequencies created when you violate the Nyquist theorem. |
-| **Filter** | A math formula that selectively amplifies or suppresses certain frequencies. |
-| **FIR Filter** | No feedback, always stable, linear phase, needs many coefficients. |
-| **IIR Filter** | Uses feedback, efficient, can be unstable, has phase distortion (fixed by filtfilt). |
-| **Equalizer** | Splits audio into bands, applies gain to each, sums them back. |
-| **Gain in dB** | A logarithmic scale: +6 dB ≈ 2× amplitude, -6 dB ≈ 0.5× amplitude. |
-| **Upsampling** | Insert zeros + filter to increase sample rate without aliasing. |
-| **Downsampling** | Filter + discard samples to decrease sample rate without aliasing. |
-| **Window Function** | Smoothly tapers FIR coefficients to reduce spectral ripple. |

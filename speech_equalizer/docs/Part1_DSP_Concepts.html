@@ -3,397 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Part1_DSP_Concepts</title>
+    <title>Speech Equalizer: Part 1 - DSP Concepts</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; color: #333; }
-        pre { background-color: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
-        code { font-family: monospace; background-color: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px; }
-        img { max-width: 100%; height: auto; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        :root {
+            --bg-color: #1e1e24;
+            --text-color: #e0e0e0;
+            --heading-color: #ffffff;
+            --accent-color: #7c5cfc; /* Purple theme for speech equalizer */
+            --code-bg: #2d2d30;
+            --tooltip-bg: #333338;
+            --tooltip-text: #f5f5f5;
+            --border-color: #444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1, h2, h3 {
+            color: var(--heading-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2.5rem;
+        }
+
+        h1 { font-size: 2.5rem; color: var(--accent-color); }
+        h2 { font-size: 1.8rem; }
+        h3 { font-size: 1.4rem; border-bottom: none; color: #a855f7; margin-bottom: 0.5rem; }
+
+        p, li { font-size: 1.1rem; margin-bottom: 1rem; }
+
+        /* Code Block Styling */
+        pre {
+            background-color: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+        }
+        
+        code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background-color: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: #9cdcfe;
+        }
+
+        /* Next-Gen Interactive Tooltip Styling */
+        .concept-link {
+            color: var(--accent-color);
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            cursor: help;
+            position: relative;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .concept-link:hover { color: #a855f7; }
+
+        .concept-link .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            width: 350px;
+            background-color: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            text-align: left;
+            border-radius: 8px;
+            padding: 15px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--accent-color);
+            font-size: 0.95rem;
+            font-weight: normal;
+            line-height: 1.5;
+        }
+
+        .concept-link .tooltip-content::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: var(--accent-color) transparent transparent transparent;
+        }
+
+        .concept-link:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .tooltip-title {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 4px;
+        }
+
+        /* Image Styling */
+        .figure-container {
+            margin: 2rem 0;
+            text-align: center;
+            background: #25252b;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .figure-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .figure-caption {
+            margin-top: 1rem;
+            font-style: italic;
+            color: #aaa;
+            font-size: 0.95rem;
+        }
+
+        .callout {
+            background-color: rgba(124, 92, 252, 0.1);
+            border-left: 5px solid var(--accent-color);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background-color: #25252b;
+        }
+        
+        th, td {
+            padding: 12px;
+            border: 1px solid #444;
+            text-align: left;
+        }
+        
+        th {
+            background-color: #333;
+            color: var(--accent-color);
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover {
+            background-color: #6a4cdd;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary { background-color: #444; }
+        .btn-secondary:hover { background-color: #555; }
+
     </style>
 </head>
 <body>
-    <h1>Part 1: The Foundational DSP &amp; Audio Concepts</h1>
-<p>Before we touch a single line of MATLAB code, we need to build up every concept from absolute zero. By the end of this section, you will understand what an equalizer is mathematically, how filters work, what &quot;dB&quot; means, and what happens when you change the speed at which audio is recorded. Let&#39;s begin.</p>
-<hr>
-<h2>1.1 What is Sound, Physically?</h2>
-<p>Sound is vibration. When someone speaks, their vocal cords vibrate, pushing air molecules back and forth. These vibrations travel through the air as a <strong>pressure wave</strong>. When this pressure wave reaches your ear, your eardrum vibrates, and your brain interprets that vibration as sound.</p>
-<p>A <strong>microphone</strong> does the same thing as your eardrum: it converts the air pressure fluctuations into an <strong>electrical voltage</strong> that goes up and down over time. If you plot that voltage on a graph with time on the x-axis and voltage on the y-axis, you get a <strong>waveform</strong> — a squiggly line that represents the sound.</p>
-<h3>Key properties of a sound wave:</h3>
-<ul>
-<li><p><strong>Frequency</strong>: How fast the vibration repeats, measured in <strong>Hertz (Hz)</strong>. 1 Hz means one complete back-and-forth cycle per second. A deep bass note might be 80 Hz. A high-pitched whistle might be 8000 Hz. Human hearing ranges from roughly 20 Hz to 20,000 Hz (20 kHz).</p>
-</li>
-<li><p><strong>Amplitude</strong>: How large the vibration is — how far the pressure deviates from its resting state. Bigger amplitude = louder sound.</p>
-</li>
-<li><p><strong>A real sound is never a single frequency.</strong> When someone speaks, the resulting waveform is a complex mixture of hundreds or thousands of different frequencies all happening simultaneously. The <em>specific mix</em> of frequencies is what makes a voice sound different from a piano or a drum.</p>
-</li>
-</ul>
-<hr>
-<h2>1.2 What is &quot;Digital&quot; Audio?</h2>
-<p>The electrical voltage from a microphone is a <strong>continuous</strong> signal — it changes smoothly and has a value at every instant in time. But computers can&#39;t store continuous things. They store discrete numbers.</p>
-<h3>Sampling: Turning Continuous into Discrete</h3>
-<p>To record audio digitally, we use an <strong>Analog-to-Digital Converter (ADC)</strong>. It does two things:</p>
-<ol>
-<li><p><strong>Sampling</strong>: It measures the voltage at regular intervals. If we sample at <strong>44,100 times per second</strong>, the sampling rate is <strong>fs = 44,100 Hz</strong>. This is the standard for CD-quality audio. Each measurement is called a <strong>sample</strong>.</p>
-</li>
-<li><p><strong>Quantization</strong>: Each measured voltage is rounded to the nearest number that the system can represent (e.g., a 16-bit system has 65,536 possible levels).</p>
-</li>
-</ol>
-<p>After this process, your audio is just a <strong>long list of numbers</strong> (an array). For example, 3 seconds of audio at 44,100 Hz produces 3 × 44,100 = <strong>132,300 numbers</strong> in an array. That array is what your MATLAB code manipulates.</p>
-<h3>What does the array look like?</h3>
-<pre><code>x = [0.00, 0.02, 0.05, 0.09, 0.12, 0.14, 0.12, 0.09, ...]
-</code></pre>
-<p>Each number represents the air pressure (normalized to between -1 and +1) at one instant in time. The spacing between samples is <code>1/fs</code> seconds. At 44,100 Hz, each sample is <code>1/44100 ≈ 0.0000227 seconds</code> apart.</p>
-<hr>
-<h2>1.3 The Nyquist Theorem — The Most Important Rule in Digital Audio</h2>
-<p>Here is the single most critical concept in all of digital signal processing:</p>
-<blockquote>
-<p><strong>The Nyquist-Shannon Sampling Theorem</strong>: To perfectly capture a frequency <code>f</code> in a digital recording, you must sample at <strong>at least 2× that frequency</strong>. That is, <code>fs ≥ 2f</code>.</p>
-</blockquote>
-<p>The <strong>Nyquist frequency</strong> is defined as exactly half the sampling rate:</p>
-<pre><code>f_Nyquist = fs / 2
-</code></pre>
-<p>For our audio at fs = 44,100 Hz:</p>
-<pre><code>f_Nyquist = 44,100 / 2 = 22,050 Hz
-</code></pre>
-<h3>What does this mean practically?</h3>
-<ul>
-<li>Our digital audio can represent frequencies up to <strong>22,050 Hz</strong>. Since human hearing maxes out at ~20,000 Hz, this is more than enough.</li>
-<li>Any frequency <strong>above</strong> 22,050 Hz simply <strong>cannot exist</strong> in our digital audio. If we tried to record a 23,000 Hz tone at 44,100 Hz sampling, something terrible would happen: it would appear as a <strong>fake, lower frequency</strong> in our recording. This distortion is called <strong>aliasing</strong> — the high frequency masquerades as (takes the alias of) a lower one.</li>
-</ul>
-<h3>Why does this matter for equalizers?</h3>
-<p>When we design filters in MATLAB, we don&#39;t specify frequencies in raw Hz. Instead, we express them as a <strong>fraction of the Nyquist frequency</strong>. This is called <strong>normalized frequency</strong>:</p>
-<pre><code>Wn = f_desired / f_Nyquist = f_desired / (fs/2)
-</code></pre>
-<p>For example, if we want to filter at 5,000 Hz with fs = 44,100:</p>
-<pre><code>Wn = 5000 / 22050 = 0.2268
-</code></pre>
-<p>This normalized frequency always falls between 0 (DC, meaning 0 Hz) and 1 (the Nyquist frequency). You will see this calculation on nearly every line of the filter design code.</p>
-<hr>
-<h2>1.4 What is an Equalizer?</h2>
-<p>You have seen equalizer sliders on music apps — those vertical bars labeled &quot;Bass&quot;, &quot;Mid&quot;, &quot;Treble&quot;, etc. Each slider controls the volume of a specific range of frequencies. Slide one up, and those frequencies get louder. Slide one down, and they get quieter.</p>
-<h3>The Mathematical Definition</h3>
-<p>An equalizer is a system that <strong>decomposes</strong> an audio signal into multiple <strong>frequency bands</strong> (sub-ranges of frequency), applies a separate <strong>gain</strong> (volume multiplier) to each band, and then <strong>adds them all back together</strong> to produce the output.</p>
-<p>Here is the process, step by step:</p>
-<pre><code>Input Signal x(t)
-    │
-    ├──▶ [Band 1 Filter: 0-100 Hz]     ──▶ × Gain₁ ──▶ y₁(t)
-    ├──▶ [Band 2 Filter: 100-300 Hz]   ──▶ × Gain₂ ──▶ y₂(t)
-    ├──▶ [Band 3 Filter: 300-800 Hz]   ──▶ × Gain₃ ──▶ y₃(t)
-    ├──▶ [Band 4 Filter: 800-2000 Hz]  ──▶ × Gain₄ ──▶ y₄(t)
-    ├──▶ [Band 5 Filter: 2000-5000 Hz] ──▶ × Gain₅ ──▶ y₅(t)
-    ├──▶ [Band 6 Filter: 5000-10kHz]   ──▶ × Gain₆ ──▶ y₆(t)
-    ├──▶ [Band 7 Filter: 10k-20kHz]    ──▶ × Gain₇ ──▶ y₇(t)
-    │
-    └──▶ Output = y₁ + y₂ + y₃ + y₄ + y₅ + y₆ + y₇
-</code></pre>
-<p>Each &quot;Band Filter&quot; is a <strong>bandpass filter</strong> — a filter that only allows frequencies within a specific range to pass through and blocks everything outside that range. The output of each bandpass filter is a version of the original audio that contains <em>only</em> the frequencies in that band.</p>
-<p>Then each band is multiplied by its gain. If the gain is &gt; 1, that band gets louder (<strong>boosted</strong>). If the gain is &lt; 1, that band gets quieter (<strong>cut</strong>). If the gain is exactly 1, the band is unchanged.</p>
-<p>Finally, all seven modified bands are summed together. Since the bands cover the entire audible spectrum without gaps, the sum reconstructs a complete audio signal — but now with the frequency balance adjusted according to the gains.</p>
-<h3>Why not just boost the whole signal?</h3>
-<p>Because different frequency ranges carry different information:</p>
-<table>
-<thead>
-<tr>
-<th>Frequency Range</th>
-<th>What it Contains (in Speech)</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>0–100 Hz</td>
-<td>Rumble, room hum, low vibrations. Not much useful speech.</td>
-</tr>
-<tr>
-<td>100–300 Hz</td>
-<td>The &quot;body&quot; or warmth of a voice. The fundamental pitch of most male speakers.</td>
-</tr>
-<tr>
-<td>300–800 Hz</td>
-<td>Lower formants. Makes speech sound full or &quot;boxy.&quot;</td>
-</tr>
-<tr>
-<td>800–2000 Hz</td>
-<td>Upper formants. Critical for speech intelligibility — this is where vowel sounds are distinguished.</td>
-</tr>
-<tr>
-<td>2000–5000 Hz</td>
-<td>&quot;Presence&quot; range. Consonants like &quot;t&quot;, &quot;s&quot;, &quot;k&quot; live here. Boosting this makes speech clearer and &quot;closer.&quot;</td>
-</tr>
-<tr>
-<td>5000–10,000 Hz</td>
-<td>&quot;Brilliance&quot; and sibilance. The &quot;ssss&quot; and &quot;shhhh&quot; sounds.</td>
-</tr>
-<tr>
-<td>10,000–20,000 Hz</td>
-<td>&quot;Air.&quot; Very high harmonics. Gives a sense of spaciousness.</td>
-</tr>
-</tbody></table>
-<p>An equalizer lets you selectively boost the 2k–5k range to make speech clearer on a podcast, while cutting the 0–100 Hz range to remove background rumble — without affecting the rest.</p>
-<hr>
-<h2>1.5 What is a Digital Filter?</h2>
-<p>A digital filter is a mathematical formula that takes your audio array (a list of numbers) as input and produces a new array as output, where certain frequencies have been amplified or suppressed.</p>
-<p>Every digital filter is defined by a <strong>difference equation</strong>:</p>
-<pre><code>y[n] = b₀·x[n] + b₁·x[n-1] + b₂·x[n-2] + ...
-       - a₁·y[n-1] - a₂·y[n-2] - ...
-</code></pre>
-<p>Where:</p>
-<ul>
-<li><code>x[n]</code> = the current input sample (the n-th number in your input array)</li>
-<li><code>x[n-1]</code> = the previous input sample</li>
-<li><code>y[n]</code> = the current output sample (what the filter produces)</li>
-<li><code>y[n-1]</code> = the previous output sample</li>
-<li><code>b₀, b₁, b₂, ...</code> = <strong>feedforward coefficients</strong> (they weigh the current and past <em>inputs</em>)</li>
-<li><code>a₁, a₂, ...</code> = <strong>feedback coefficients</strong> (they weigh the past <em>outputs</em>)</li>
-</ul>
-<p>The filter processes the signal <strong>one sample at a time</strong>, marching through the array from the first sample to the last. At each step, it computes one output sample by taking a weighted combination of recent inputs and recent outputs.</p>
-<p>The specific values of the <code>b</code> and <code>a</code> coefficients determine which frequencies are passed and which are blocked. Designing a filter means computing these coefficients.</p>
-<hr>
-<h2>1.6 FIR vs IIR Filters — The Two Families</h2>
-<p>There are two fundamentally different types of digital filters, and your MATLAB code lets the user choose between them.</p>
-<h3>FIR = Finite Impulse Response</h3>
-<p>An FIR filter <strong>only has <code>b</code> coefficients</strong>. The <code>a</code> side is simply <code>a₀ = 1</code> (no feedback). The equation becomes:</p>
-<pre><code>y[n] = b₀·x[n] + b₁·x[n-1] + b₂·x[n-2] + ... + bₙ·x[n-N]
-</code></pre>
-<p>It only looks at the current and past <strong>N input values</strong>. It never feeds its own output back into the equation.</p>
-<p><strong>Why &quot;Finite Impulse Response&quot;?</strong> Imagine feeding a single spike (value 1 at time 0, value 0 everywhere else) into the filter. The output will be the <code>b</code> coefficients themselves, one by one: <code>b₀, b₁, b₂, ..., bₙ</code>. After N+1 samples, the output becomes zero forever. The &quot;impulse response&quot; (the output when you feed in a spike) is <strong>finite</strong> in length.</p>
-<p><strong>Properties of FIR filters:</strong></p>
-<ol>
-<li><p><strong>Always Stable</strong>: Since there is no feedback loop, the output can never grow uncontrollably. No matter what input you give it, the output stays bounded. This is a huge safety advantage.</p>
-</li>
-<li><p><strong>Linear Phase</strong> (when designed with symmetric coefficients): This is the most important advantage for audio. &quot;Linear phase&quot; means that <strong>all frequencies are delayed by exactly the same amount of time</strong>. The waveform shape is perfectly preserved — it is just shifted to the right in time. There is no distortion of the signal&#39;s shape.</p>
-</li>
-<li><p><strong>Needs Many Coefficients</strong>: To get a sharp frequency cutoff (a steep wall between &quot;pass&quot; and &quot;block&quot;), you need a large number of <code>b</code> coefficients. For example, to sharply isolate a band like 100–300 Hz from a 44,100 Hz signal, you might need an FIR filter of order 100 or more (meaning 101 coefficients). The code defaults to order 100.</p>
-</li>
-</ol>
-<h3>IIR = Infinite Impulse Response</h3>
-<p>An IIR filter <strong>has both <code>b</code> and <code>a</code> coefficients</strong>. The equation includes feedback:</p>
-<pre><code>y[n] = b₀·x[n] + b₁·x[n-1] + ... - a₁·y[n-1] - a₂·y[n-2] - ...
-</code></pre>
-<p>It uses its own past outputs in the computation. This feedback loop is what gives IIR filters their power — and their risks.</p>
-<p><strong>Why &quot;Infinite Impulse Response&quot;?</strong> Feed in a single spike. The feedback causes the output to decay exponentially, but it theoretically never reaches exactly zero. The impulse response is <strong>infinite</strong> in duration (though it gets vanishingly small very quickly for a well-designed, stable filter).</p>
-<p><strong>Properties of IIR filters:</strong></p>
-<ol>
-<li><p><strong>Very Efficient</strong>: A 4th-order IIR filter (with only ~5 <code>b</code> coefficients and ~5 <code>a</code> coefficients) can achieve a frequency cutoff sharpness that would require an FIR filter with hundreds of coefficients. This means less computation.</p>
-</li>
-<li><p><strong>Can Be Unstable</strong>: If the feedback coefficients are poorly chosen, the output can grow without bound — the filter &quot;blows up.&quot; MATLAB&#39;s design functions (<code>butter</code>, <code>cheby1</code>, <code>cheby2</code>) guarantee stability for the orders they produce, so this is usually handled for you.</p>
-</li>
-<li><p><strong>Non-Linear Phase</strong>: This is the critical disadvantage for audio. Different frequencies get delayed by different amounts. This means that the <em>shape</em> of the waveform changes as it passes through the filter. Components that were aligned in time before the filter may come out slightly misaligned after.</p>
-</li>
-</ol>
-<h3>How Does Phase Distortion from IIR Affect Speech?</h3>
-<p>Phase distortion is subtle. Here is what happens:</p>
-<p>Imagine a spoken word like &quot;tap.&quot; It consists of a sudden burst (&quot;t&quot;), a vowel (&quot;a&quot;), and another burst (&quot;p&quot;), all happening in rapid succession. Each of these sounds occupies different frequency ranges.</p>
-<p>With a <strong>linear-phase FIR filter</strong>, all of these frequency components are delayed by the same amount. The &quot;t&quot;, &quot;a&quot;, and &quot;p&quot; remain aligned. The word still sounds like &quot;tap&quot; — just played back a tiny fraction of a second later.</p>
-<p>With a <strong>non-linear-phase IIR filter</strong>, the low-frequency components of the vowel might be delayed more than the high-frequency components of the consonants. The &quot;t&quot; burst might arrive slightly earlier relative to the &quot;a&quot; than it should. This causes a subtle <strong>smearing</strong> or <strong>pre-ringing</strong> effect. For most listeners, this is nearly imperceptible on speech — the human auditory system is remarkably insensitive to phase changes. However, in careful A/B testing, some people report that IIR-filtered speech sounds slightly &quot;different&quot; or &quot;less crisp.&quot;</p>
-<p><strong>The fix: <code>filtfilt</code></strong>. Your code uses a MATLAB trick: when IIR is selected, it calls <code>filtfilt</code> instead of <code>filter</code>. This function filters the signal forward, then flips it and filters it backward. The forward phase shift and backward phase shift cancel perfectly, resulting in <strong>zero phase distortion</strong>. The output is not shifted in time at all, and the waveform shape is perfectly preserved. The catch is that <code>filtfilt</code> doubles the effective filter order (a 4th-order filter acts like an 8th-order one) and requires the entire signal upfront (no real-time processing).</p>
-<hr>
-<h2>1.7 The Three IIR Filter Designs in This Project</h2>
-<p>When you choose IIR mode, the code offers three sub-types. They differ in their mathematical philosophy:</p>
-<h3>Butterworth</h3>
-<ul>
-<li><strong>Philosophy</strong>: &quot;Maximally flat magnitude response.&quot; The passband (the range of frequencies you want to keep) has absolutely no ripples — the magnitude response is as smooth and flat as possible.</li>
-<li><strong>Trade-off</strong>: Because it refuses to ripple, the transition from passband to stopband is relatively <strong>gradual</strong> (gentle slope). It takes more frequency space to go from &quot;fully passing&quot; to &quot;fully blocking.&quot;</li>
-<li><strong>MATLAB function</strong>: <code>butter(order, Wn, type)</code></li>
-</ul>
-<h3>Chebyshev Type I</h3>
-<ul>
-<li><strong>Philosophy</strong>: Allow some controlled <strong>ripple in the passband</strong> to get a <strong>steeper</strong> transition than Butterworth at the same filter order.</li>
-<li><strong>Parameter</strong>: Ripple depth in the passband (your code uses 0.5 dB, meaning the passband magnitude oscillates by up to 0.5 dB).</li>
-<li><strong>Trade-off</strong>: The passband is not perfectly flat — there are small waves. For an equalizer, this means the frequencies you <em>want</em> to keep will have their volume oscillate slightly.</li>
-<li><strong>MATLAB function</strong>: <code>cheby1(order, ripple_dB, Wn, type)</code></li>
-</ul>
-<h3>Chebyshev Type II</h3>
-<ul>
-<li><strong>Philosophy</strong>: Allow controlled <strong>ripple in the stopband</strong> (the range you&#39;re blocking) to get a steeper transition, while keeping the <strong>passband perfectly flat</strong>.</li>
-<li><strong>Parameter</strong>: Minimum stopband attenuation (your code uses 40 dB, meaning blocked frequencies are reduced to at least 1/100th of their original amplitude).</li>
-<li><strong>Trade-off</strong>: The stopband has small oscillations, but the passband is monotonically flat. This is often preferred for audio because the frequencies you <em>keep</em> are undistorted.</li>
-<li><strong>MATLAB function</strong>: <code>cheby2(order, stopband_attenuation_dB, Wn, type)</code></li>
-</ul>
-<hr>
-<h2>1.8 Gain in Decibels (dB)</h2>
-<p>Your equalizer asks the user to input gains in <strong>dB</strong> (decibels). This is not a simple multiplier — it&#39;s a <strong>logarithmic scale</strong>.</p>
-<h3>Why use dB instead of just &quot;multiply by 2&quot;?</h3>
-<p>Because the human ear perceives loudness <strong>logarithmically</strong>, not linearly. Doubling the sound pressure does not make it sound &quot;twice as loud&quot; to you — it sounds just a little bit louder. To sound &quot;twice as loud,&quot; you need about 10× more power. The dB scale matches this perception.</p>
-<h3>The Formula</h3>
-<p>For <strong>amplitude</strong> (voltage, sound pressure), the conversion from dB to a linear multiplier is:</p>
-<pre><code>linear_gain = 10^(gain_dB / 20)
-</code></pre>
-<p>Examples:</p>
-<table>
-<thead>
-<tr>
-<th>Gain in dB</th>
-<th>Linear Multiplier</th>
-<th>What it means</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>0 dB</td>
-<td>10^(0/20) = 1.0</td>
-<td>No change</td>
-</tr>
-<tr>
-<td>+6 dB</td>
-<td>10^(6/20) ≈ 2.0</td>
-<td>Double the amplitude (noticeably louder)</td>
-</tr>
-<tr>
-<td>+20 dB</td>
-<td>10^(20/20) = 10.0</td>
-<td>10× the amplitude (much louder)</td>
-</tr>
-<tr>
-<td>-6 dB</td>
-<td>10^(-6/20) ≈ 0.5</td>
-<td>Half the amplitude (noticeably quieter)</td>
-</tr>
-<tr>
-<td>-20 dB</td>
-<td>10^(-20/20) = 0.1</td>
-<td>1/10th the amplitude (much quieter)</td>
-</tr>
-<tr>
-<td>+3 dB</td>
-<td>10^(3/20) ≈ 1.41</td>
-<td>√2 × amplitude (about 1.4× louder)</td>
-</tr>
-</tbody></table>
-<p><strong>In the code</strong>, the line <code>gain_lin = 10^(gains_db(i)/20)</code> converts the user&#39;s dB value into this linear multiplier, and then the filtered band signal is multiplied by it: <code>y_bands(:,i) = yi * gain_lin</code>.</p>
-<p>So if the user enters a gain of +6 dB for the 100–300 Hz band, every sample in that band&#39;s filtered signal gets multiplied by ~2.0, effectively doubling the volume of those frequencies.</p>
-<hr>
-<h2>1.9 Multirate DSP: Changing the Sample Rate</h2>
-<p>Your code includes a feature to change the output sample rate. This brings us to <strong>multirate digital signal processing</strong> — the science of changing the number of samples per second in a digital signal.</p>
-<h3>Why would you change the sample rate?</h3>
-<ul>
-<li><p><strong>Upsampling</strong> (increasing the sample rate): If you need to play the audio on a system that requires a higher sample rate, or if you want to reduce quantization effects in further processing. Your code demonstrates <strong>4× upsampling</strong> (e.g., 44,100 Hz → 176,400 Hz).</p>
-</li>
-<li><p><strong>Downsampling</strong> (decreasing the sample rate): If you want to reduce the file size, or the target playback system uses a lower rate. Your code demonstrates <strong>halving</strong> (e.g., 44,100 Hz → 22,050 Hz).</p>
-</li>
-</ul>
-<h3>Upsampling by 4×</h3>
-<p>This means going from 44,100 samples per second to 176,400 samples per second. Conceptually:</p>
-<ol>
-<li><p><strong>Insert zeros</strong>: Between every original sample, insert 3 zeros. This makes the array 4× longer but introduces high-frequency artifacts (images of the original spectrum that repeat at multiples of the original sampling rate).</p>
-</li>
-<li><p><strong>Low-pass filter</strong>: Apply a filter that removes those artifacts, keeping only the original frequencies (0 to 22,050 Hz). The filter smoothly interpolates between the original samples, filling in the zeros with mathematically estimated values.</p>
-</li>
-</ol>
-<p>The result is an audio signal with 4× as many samples that sounds identical — the extra samples just provide finer time resolution.</p>
-<h3>Downsampling by 2×</h3>
-<p>This means going from 44,100 samples per second to 22,050 samples per second. Conceptually:</p>
-<ol>
-<li><p><strong>Low-pass filter first</strong>: Before throwing away any samples, you must filter the signal to remove all frequencies above the <strong>new Nyquist frequency</strong>: 22,050 / 2 = 11,025 Hz. If you skip this step, frequencies between 11,025 Hz and 22,050 Hz will <strong>alias</strong> down into the 0–11,025 Hz range, creating audible distortion.</p>
-</li>
-<li><p><strong>Discard every other sample</strong>: Keep only every 2nd sample, cutting the array length in half.</p>
-</li>
-</ol>
-<p>The result is an audio signal with half as many samples. It sounds almost the same, but all frequencies above 11,025 Hz have been removed. For speech, this is often acceptable because most speech energy is below 8,000 Hz.</p>
-<h3>The Nyquist Connection</h3>
-<p>The Nyquist theorem is the reason you <strong>must</strong> filter before downsampling. If the original signal contains any frequency above the new Nyquist limit, those frequencies will fold back (alias) and corrupt your audio irreversibly. The anti-aliasing low-pass filter prevents this.</p>
-<p>MATLAB&#39;s <code>resample(x, P, Q)</code> function handles all of this automatically — it designs and applies the necessary anti-aliasing filter, then changes the sample rate by the ratio P/Q.</p>
-<hr>
-<h2>1.10 Window Functions: Hamming, Hanning, and Blackman</h2>
-<p>When designing FIR filters, we need to use <strong>window functions</strong>. Here&#39;s why:</p>
-<h3>The Problem: You Can&#39;t Have a Perfect Filter</h3>
-<p>The mathematically &quot;ideal&quot; bandpass filter would be a perfect rectangular brick wall: magnitude = 1 inside the passband, magnitude = 0 outside. But the impulse response of this ideal filter is a <strong>sinc function</strong> (<code>sin(x)/x</code>), which extends infinitely in both directions. We can&#39;t store an infinite number of coefficients.</p>
-<h3>The Solution: Truncate and Window</h3>
-<p>We truncate the ideal impulse response to N+1 samples. But abruptly cutting it off introduces ringing artifacts in the frequency response — ripples that appear near the cutoff frequency. This is called the <strong>Gibbs phenomenon</strong>.</p>
-<p>To reduce these ripples, we multiply the truncated impulse response by a <strong>window function</strong> — a smooth curve that tapers the coefficients to zero at the edges. This reduces the abruptness of the truncation.</p>
-<h3>The Three Windows in Your Code</h3>
-<table>
-<thead>
-<tr>
-<th>Window</th>
-<th>Main Lobe Width</th>
-<th>Sidelobe Level</th>
-<th>Best For</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Hamming</strong></td>
-<td>Medium</td>
-<td>-53 dB (very good)</td>
-<td>General-purpose. Most popular default. Good balance between sharp cutoff and sidelobe suppression.</td>
-</tr>
-<tr>
-<td><strong>Hanning</strong> (Hann)</td>
-<td>Medium</td>
-<td>-44 dB (good)</td>
-<td>Slightly wider main lobe than Hamming, but the sidelobes roll off faster. Better when you care more about distant sidelobes than the first few.</td>
-</tr>
-<tr>
-<td><strong>Blackman</strong></td>
-<td>Wide</td>
-<td>-74 dB (excellent)</td>
-<td>When you need maximum sidelobe suppression and can tolerate a wider transition band. Great for situations where even small leakage from adjacent bands is unacceptable.</td>
-</tr>
-</tbody></table>
-<p><strong>Main lobe width</strong> = how gradual the transition is from pass to stop. Wider = less sharp cutoff.</p>
-<p><strong>Sidelobe level</strong> = how much the filter &quot;leaks&quot; frequencies it&#39;s supposed to block. Lower (more negative dB) = better blocking.</p>
-<p><strong>The trade-off is always the same</strong>: better sidelobe suppression comes at the cost of a wider transition band. You cannot have both a razor-sharp cutoff and perfect blocking — this is a fundamental limitation of FIR design.</p>
-<h3>How does this affect the equalizer?</h3>
-<p>With a <strong>Hamming window</strong>, the borders between your 7 frequency bands will be reasonably sharp with good out-of-band rejection. With a <strong>Blackman window</strong>, the borders will be less sharp, but each band will have even less contamination from adjacent bands. The choice depends on whether you prioritize sharpness or purity.</p>
-<hr>
-<h2>1.11 Summary of Concepts</h2>
-<p>Before reading the code, make sure you&#39;re comfortable with these ideas:</p>
-<table>
-<thead>
-<tr>
-<th>Concept</th>
-<th>One-Sentence Summary</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Sound</strong></td>
-<td>Pressure vibrations converted to an array of numbers by a microphone + ADC.</td>
-</tr>
-<tr>
-<td><strong>Sampling Rate (fs)</strong></td>
-<td>How many numbers per second are in the array.</td>
-</tr>
-<tr>
-<td><strong>Nyquist Frequency</strong></td>
-<td>fs/2 — the highest frequency the digital audio can represent.</td>
-</tr>
-<tr>
-<td><strong>Aliasing</strong></td>
-<td>Fake frequencies created when you violate the Nyquist theorem.</td>
-</tr>
-<tr>
-<td><strong>Filter</strong></td>
-<td>A math formula that selectively amplifies or suppresses certain frequencies.</td>
-</tr>
-<tr>
-<td><strong>FIR Filter</strong></td>
-<td>No feedback, always stable, linear phase, needs many coefficients.</td>
-</tr>
-<tr>
-<td><strong>IIR Filter</strong></td>
-<td>Uses feedback, efficient, can be unstable, has phase distortion (fixed by filtfilt).</td>
-</tr>
-<tr>
-<td><strong>Equalizer</strong></td>
-<td>Splits audio into bands, applies gain to each, sums them back.</td>
-</tr>
-<tr>
-<td><strong>Gain in dB</strong></td>
-<td>A logarithmic scale: +6 dB ≈ 2× amplitude, -6 dB ≈ 0.5× amplitude.</td>
-</tr>
-<tr>
-<td><strong>Upsampling</strong></td>
-<td>Insert zeros + filter to increase sample rate without aliasing.</td>
-</tr>
-<tr>
-<td><strong>Downsampling</strong></td>
-<td>Filter + discard samples to decrease sample rate without aliasing.</td>
-</tr>
-<tr>
-<td><strong>Window Function</strong></td>
-<td>Smoothly tapers FIR coefficients to reduce spectral ripple.</td>
-</tr>
-</tbody></table>
+
+    <h1>Speech Equalizer: DSP Concepts</h1>
+
+    <div class="callout">
+        <strong>Welcome to the Interactive Audio Guide!</strong><br>
+        Before we touch a single line of MATLAB code, we need to build up every concept from absolute zero. By the end of this section, you will understand what an equalizer is mathematically, how filters work, what "dB" means, and what happens when you change the speed at which audio is recorded. Hover over any <span class="concept-link">highlighted text<span class="tooltip-content"><span class="tooltip-title">Audio DSP</span>We will break down how digital audio is manipulated using math. Hover to learn!</span></span> to reveal beginner-friendly explanations.
+    </div>
+
+    <h2>1.1 What is Sound, Physically?</h2>
+    <p>Sound is vibration. When someone speaks, their vocal cords vibrate, pushing air molecules back and forth. These vibrations travel through the air as a <strong>pressure wave</strong>.</p>
+    <p>A <strong>microphone</strong> converts these air pressure fluctuations into an <strong>electrical voltage</strong>. If you plot that voltage on a graph with time on the x-axis, you get a <strong>waveform</strong>.</p>
+    
+    <h3>Key properties of a sound wave:</h3>
+    <ul>
+        <li><strong>Frequency</strong>: How fast the vibration repeats, measured in <strong>Hertz (Hz)</strong>. A deep bass note might be 80 Hz. A high-pitched whistle might be 8000 Hz.</li>
+        <li><strong>Amplitude</strong>: How large the vibration is. Bigger amplitude = louder sound.</li>
+        <li><strong>A real sound is never a single frequency.</strong> Speech is a complex mixture of hundreds of different frequencies happening simultaneously.</li>
+    </ul>
+
+    <h2>1.2 What is "Digital" Audio?</h2>
+    <p>To record audio digitally, we use an <strong>Analog-to-Digital Converter (ADC)</strong>. It does two things:</p>
+    <ol>
+        <li><strong>Sampling</strong>: It measures the voltage at regular intervals. If we sample at <strong>44,100 times per second</strong>, the sampling rate is <strong>fs = 44,100 Hz</strong>.</li>
+        <li><strong>Quantization</strong>: Each measured voltage is rounded to the nearest number the system can represent.</li>
+    </ol>
+    <p>After this process, your audio is just a <strong>long list of numbers</strong> (an array) that your MATLAB code manipulates.</p>
+
+<pre>
+x = [0.00, 0.02, 0.05, 0.09, 0.12, 0.14, 0.12, 0.09, ...]
+</pre>
+
+    <h2>1.3 The Nyquist Theorem</h2>
+    <p>Here is the single most critical concept in all of digital signal processing:</p>
+    <div class="callout">
+        <strong>The Nyquist-Shannon Sampling Theorem</strong>: To perfectly capture a frequency <code>f</code> in a digital recording, you must sample at <strong>at least 2× that frequency</strong>. That is, <code>fs ≥ 2f</code>.
+    </div>
+    <p>The <span class="concept-link">Nyquist frequency<span class="tooltip-content"><span class="tooltip-title">Nyquist Frequency</span>Exactly half the sampling rate. If fs = 44,100 Hz, Nyquist is 22,050 Hz. Any frequency above this cannot be recorded properly and will cause distortion called Aliasing.</span></span> is defined as exactly half the sampling rate.</p>
+    <p>When we design filters in MATLAB, we don't specify frequencies in raw Hz. Instead, we express them as a <strong>normalized frequency</strong>: a fraction of the Nyquist limit (between 0.0 and 1.0).</p>
+
+    <h2>1.4 What is an Equalizer?</h2>
+    <p>An <span class="concept-link">Equalizer (EQ)<span class="tooltip-content"><span class="tooltip-title">Audio Equalizer</span>A software or hardware tool that allows you to independently adjust the volume (gain) of specific frequency ranges within an audio signal.</span></span> decomposes an audio signal into multiple <strong>frequency bands</strong>, applies a separate <strong>gain</strong> to each band, and then adds them all back together.</p>
+
+    <div class="figure-container">
+        <img src="../figures/fig01_all_magnitudes.png" alt="All 7 Frequency Bands">
+        <div class="figure-caption">Figure 1: The Magnitude Response of our 7-Band Filter Bank. You can clearly see the 7 distinct "hills", each representing one isolated frequency band ready to be adjusted.</div>
+    </div>
+
+    <h3>Why not just boost the whole signal?</h3>
+    <p>Because different frequency ranges carry different information:</p>
+    <table>
+        <tr><th>Frequency Range</th><th>What it Contains (in Speech)</th></tr>
+        <tr><td>0–100 Hz</td><td>Rumble, room hum, low vibrations. Not much useful speech.</td></tr>
+        <tr><td>100–300 Hz</td><td>The "body" or warmth of a voice. The fundamental pitch.</td></tr>
+        <tr><td>800–2000 Hz</td><td>Upper formants. Critical for speech intelligibility.</td></tr>
+        <tr><td>2000–5000 Hz</td><td>"Presence" range. Consonants like "t", "s", "k".</td></tr>
+    </table>
+
+    <h2>1.5 FIR vs IIR Filters — The Two Families</h2>
+
+    <h3>FIR = Finite Impulse Response</h3>
+    <p>An FIR filter <strong>only has feedforward coefficients</strong>. It never feeds its own output back into the equation.</p>
+    <ul>
+        <li><strong>Always Stable</strong>: Since there is no feedback loop, the output can never grow uncontrollably.</li>
+        <li><strong>Linear Phase</strong>: This is the most important advantage for audio. All frequencies are delayed by exactly the same amount of time. There is no distortion of the signal's shape.</li>
+        <li><strong>Needs Many Coefficients</strong>: To get a sharp frequency cutoff, you need a large number of coefficients (e.g., Order 100).</li>
+    </ul>
+
+    <h3>IIR = Infinite Impulse Response</h3>
+    <p>An IIR filter <strong>has both feedforward and feedback coefficients</strong>.</p>
+    <ul>
+        <li><strong>Very Efficient</strong>: A 4th-order IIR filter can achieve a frequency cutoff sharpness that would require an FIR filter with hundreds of coefficients.</li>
+        <li><strong>Non-Linear Phase</strong>: Different frequencies get delayed by different amounts. This causes a subtle smearing or pre-ringing effect on speech. Your code fixes this using the <code>filtfilt</code> zero-phase trick!</li>
+    </ul>
+
+    <div class="figure-container">
+        <img src="../figures/fig10_time_compare.png" alt="Time Domain Comparison">
+        <div class="figure-caption">Figure 2: Time Domain Comparison. Top is the raw speech waveform. Bottom is the Equalized waveform. Notice how the dense, high-frequency details (the fine scribbles) are enhanced due to our clarity boosts.</div>
+    </div>
+
+    <h2>1.6 Gain in Decibels (dB)</h2>
+    <p>Gain is a <strong>logarithmic scale</strong>. Why? Because the human ear perceives loudness logarithmically, not linearly.</p>
+    <ul>
+        <li><strong>0 dB</strong>: No change.</li>
+        <li><strong>+6 dB</strong>: Multiplies amplitude by ~2.0 (noticeably louder).</li>
+        <li><strong>-6 dB</strong>: Multiplies amplitude by ~0.5 (noticeably quieter).</li>
+    </ul>
+
+    <h2>1.7 Multirate DSP: Changing the Sample Rate</h2>
+    <p>Your code includes a feature to change the output sample rate.</p>
+    <ul>
+        <li><strong>Upsampling by 4×</strong>: Inserts zeros, then applies a low-pass filter to interpolate the points. The audio sounds identical but has 4× finer time resolution.</li>
+        <li><strong>Downsampling by 2×</strong>: Applies an anti-aliasing low-pass filter FIRST (to remove everything above the new Nyquist limit), then discards every other sample.</li>
+    </ul>
+
+    <h2>1.8 Window Functions: Hamming, Hanning, Blackman</h2>
+    <p>To design an FIR filter, we truncate an infinitely-long ideal mathematical formula. This truncation causes ugly ripples (Gibbs phenomenon). To fix it, we apply a <span class="concept-link">Window Function<span class="tooltip-content"><span class="tooltip-title">Window Function</span>A smooth mathematical curve that tapers the edges of the filter coefficients to zero, preventing abrupt cutoffs that cause ringing artifacts.</span></span>.</p>
+    <ul>
+        <li><strong>Hamming</strong>: Great all-around default. Suppresses leaking noise to -53 dB.</li>
+        <li><strong>Blackman</strong>: Excellent suppression (-74 dB) but creates a wider (less sharp) transition.</li>
+    </ul>
+
+    <div class="nav-buttons">
+        <a href="../web/index.html" class="btn btn-secondary">← Back to Dashboard</a>
+        <a href="Part2_Code_Walkthrough.html" class="btn">Next: Part 2 Code Walkthrough →</a>
+    </div>
 
 </body>
 </html>

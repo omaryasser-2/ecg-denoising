@@ -1,6 +1,6 @@
-# Part 3: Visual Translation — The Figures
+# Speech Equalizer: Part 3 - Visual Translation — The Figures
 
-Now let's go through each generated figure and understand exactly what you're seeing and what it proves to your TA.
+> **Learning Guide:** Now let's go through each generated figure and understand exactly what you're seeing and what it proves to your TA.
 
 ---
 

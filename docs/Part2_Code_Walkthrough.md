@@ -1,6 +1,6 @@
-# Part 2: Line-by-Line Code Logic & Algorithm
+# ECG Denoising: Part 2 - Code Walkthrough
 
-This walks through every line of `ecg_denoising.m`, explaining what each function does, why we chose it, and how the parameters connect to the DSP concepts from Part 1.
+> **Learning Guide:** This walkthrough dissects the MATLAB implementation line-by-line. We will explain exactly what the MATLAB code does, why we chose it, and how the parameters connect to the DSP concepts (Sampling, FIR/IIR, Nyquist) from Part 1.
 
 ---
 
@@ -27,7 +27,7 @@ fs = 360; T = 10; N_seg = T * fs;
 ```
 
 - `clc` = clear command window; `clear` = delete all variables; `close all` = close all figures.
-- `fs = 360`: Sampling rate of the MIT-BIH database. Fixed by the data source.
+- **`fs = 360`**: Sampling rate of the MIT-BIH database. Fixed by the data source.
 - `T = 10`: We take 10 seconds of data (enough for ~10 heartbeats at 60 bpm).
 - `N_seg = 3600`: Total samples = 10 × 360.
 

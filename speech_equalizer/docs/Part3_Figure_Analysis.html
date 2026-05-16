@@ -3,270 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Part3_Figure_Analysis</title>
+    <title>Speech Equalizer: Part 3 - Figure Analysis</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; color: #333; }
-        pre { background-color: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
-        code { font-family: monospace; background-color: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px; }
-        img { max-width: 100%; height: auto; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        :root {
+            --bg-color: #1e1e24;
+            --text-color: #e0e0e0;
+            --heading-color: #ffffff;
+            --accent-color: #7c5cfc;
+            --btn-color: #6a4cdd;
+            --btn-hover: #7c5cfc;
+            --code-bg: #2d2d30;
+            --tooltip-bg: #333338;
+            --tooltip-text: #f5f5f5;
+            --border-color: #444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1, h2, h3 {
+            color: var(--heading-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2.5rem;
+        }
+
+        h1 { font-size: 2.5rem; color: var(--accent-color); }
+        h2 { font-size: 1.8rem; }
+        h3 { font-size: 1.4rem; border-bottom: none; color: #a855f7; margin-bottom: 0.5rem; }
+
+        p, li { font-size: 1.1rem; margin-bottom: 1rem; }
+
+        .concept-link {
+            color: var(--accent-color);
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            cursor: help;
+            position: relative;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .concept-link:hover { color: #a855f7; }
+
+        .concept-link .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            width: 350px;
+            background-color: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            text-align: left;
+            border-radius: 8px;
+            padding: 15px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--accent-color);
+            font-size: 0.95rem;
+            font-weight: normal;
+            line-height: 1.5;
+        }
+
+        .concept-link .tooltip-content::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: var(--accent-color) transparent transparent transparent;
+        }
+
+        .concept-link:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .tooltip-title {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 4px;
+        }
+
+        .figure-container {
+            margin: 2.5rem 0;
+            text-align: center;
+            background: #25252b;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .figure-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease;
+        }
+        
+        .figure-container img:hover { transform: scale(1.02); }
+
+        .figure-caption {
+            margin-top: 1rem;
+            font-style: italic;
+            color: #aaa;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .callout {
+            background-color: rgba(124, 92, 252, 0.1);
+            border-left: 5px solid var(--accent-color);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .analysis-box {
+            background-color: #2a2a30;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .analysis-box h4 {
+            margin-top: 0;
+            color: #ff9800;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background-color: #25252b;
+        }
+        
+        th, td { padding: 12px; border: 1px solid #444; text-align: left; }
+        th { background-color: #333; color: var(--accent-color); }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--btn-color);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover {
+            background-color: var(--btn-hover);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary { background-color: #444; }
+        .btn-secondary:hover { background-color: #555; }
     </style>
 </head>
 <body>
-    <h1>Part 3: Visual Translation — The Figures</h1>
-<p>Now let&#39;s go through each generated figure and understand exactly what you&#39;re seeing and what it proves to your TA.</p>
-<hr>
-<h2>3.1 Tab: &quot;All Magnitudes&quot; — Combined Magnitude Response</h2>
-<h3>What you&#39;re looking at:</h3>
-<p>A single plot with <strong>7 colored curves</strong>, one per frequency band. The x-axis is <strong>Frequency (Hz)</strong> from 0 to 22,050 Hz (the Nyquist frequency). The y-axis is <strong>Magnitude (dB)</strong>.</p>
-<h3>How to read it:</h3>
-<ul>
-<li>Each curve shows <strong>how much</strong> of each frequency the corresponding band filter lets through.</li>
-<li>Where a curve is near <strong>0 dB</strong> (the top), the filter is fully passing that frequency — it lets it through unchanged.</li>
-<li>Where a curve drops sharply to <strong>-40 dB, -60 dB, or lower</strong>, the filter is blocking that frequency. At -60 dB, the signal is attenuated to 1/1000th of its original amplitude — effectively silenced.</li>
-</ul>
-<h3>What proves correct band isolation:</h3>
-<ul>
-<li>The <strong>red curve</strong> (0–100 Hz band) should be flat near 0 dB from 0 to 100 Hz, then drop steeply after 100 Hz.</li>
-<li>The <strong>next curve</strong> (100–300 Hz) should be flat near 0 dB between 100 and 300 Hz, then drop on both sides.</li>
-<li>Each subsequent curve should be a &quot;hill&quot; centered on its frequency range.</li>
-<li><strong>The hills should not overlap significantly.</strong> If two adjacent band curves overlap a lot in the transition region, that means some frequencies are being counted in two bands, which would make them louder than intended when the bands are summed.</li>
-</ul>
-<h3>What the TA might ask:</h3>
-<blockquote>
-<p>&quot;Why aren&#39;t the transitions perfectly vertical (like a brick wall)?&quot;</p>
-</blockquote>
-<p>Because that&#39;s physically impossible with finite-order filters. The steepness of the transition depends on the filter order. Higher order = steeper. With FIR order 100, you&#39;ll see reasonably steep slopes. With IIR order 4, the slopes are gentler but still functional.</p>
-<hr>
-<h2>3.2 Tab: &quot;All Phases&quot; — Combined Phase Response</h2>
-<h3>What you&#39;re looking at:</h3>
-<p>7 curves plotting <strong>Phase (degrees)</strong> vs <strong>Frequency (Hz)</strong>.</p>
-<h3>For FIR filters:</h3>
-<p>The phase curves should be <strong>straight lines</strong> (linear). This is the hallmark of linear-phase FIR filters — the phase is a linear function of frequency, meaning all frequencies are delayed by the same amount of time. The slope of each line equals <code>-filter_order / 2</code> samples of delay.</p>
-<h3>For IIR filters (without filtfilt):</h3>
-<p>The curves would be <strong>non-linear</strong> — curved, with different slopes at different frequencies. This represents the phase distortion discussed in Part 1.</p>
-<h3>For IIR with filtfilt:</h3>
-<p>The phase plot of the filter design itself will still look non-linear (because it shows the filter&#39;s inherent response), but remember that <code>filtfilt</code> cancels this distortion when applied to the signal. The filter&#39;s phase response and the actual processing are two different things.</p>
-<h3>What proves correct behavior:</h3>
-<ul>
-<li><strong>FIR</strong>: Straight lines = linear phase = no waveform distortion. ✓</li>
-<li><strong>IIR</strong>: Curved lines = non-linear phase, but <code>filtfilt</code> fixes this during processing. ✓</li>
-</ul>
-<hr>
-<h2>3.3 Per-Band Tabs: &quot;Band 0-100&quot;, &quot;Band 100-300&quot;, etc.</h2>
-<p>Each tab has 6 sub-plots. Let&#39;s go through each:</p>
-<h3>Sub-plot 1: Magnitude Response (this band only)</h3>
-<p>Same as the combined view but zoomed to one band. Easier to see the exact passband ripple (if any) and transition width.</p>
-<h3>Sub-plot 2: Phase Response (this band only)</h3>
-<p>Same as combined but for one band.</p>
-<h3>Sub-plot 3: Impulse Response</h3>
-<p><strong>What it is</strong>: The output of the filter when you feed in a single spike <code>[1, 0, 0, 0, ...]</code>.</p>
-<p><strong>What you see for FIR</strong>: A symmetric sequence of coefficients, centered in the middle, tapering to zero at both ends (shaped by the window function). The length equals <code>filter_order + 1</code> samples, after which it&#39;s exactly zero.</p>
-<p><strong>What you see for IIR</strong>: A few large oscillations that decay exponentially toward zero. It never reaches exactly zero (theoretically), but it gets negligibly small very quickly. The response is much shorter-looking than FIR despite achieving similar frequency selectivity.</p>
-<p><strong>What it proves</strong>: </p>
-<ul>
-<li>FIR has a <strong>finite</strong>, well-defined impulse response.</li>
-<li>IIR has a <strong>decaying</strong> impulse response — if it decays to negligible values quickly, the filter is stable.</li>
-</ul>
-<h3>Sub-plot 4: Step Response</h3>
-<p><strong>What it is</strong>: The output when you feed in a constant <code>[1, 1, 1, 1, ...]</code>.</p>
-<p><strong>What you see for lowpass bands</strong> (0–100 Hz): The output gradually rises to a steady-state value near 1.0. The rise time depends on the filter order and bandwidth.</p>
-<p><strong>What you see for bandpass bands</strong> (e.g., 100–300 Hz): The output initially rises, then settles to zero. Why? Because a constant signal has frequency = 0 Hz, which is outside the 100–300 Hz passband. The filter correctly blocks it.</p>
-<p><strong>What you see for highpass bands</strong> (10k–20k Hz): Similar to bandpass — the output goes to zero because DC (0 Hz) is blocked.</p>
-<h3>Sub-plot 5: Pole-Zero Diagram</h3>
-<p><strong>What it is</strong>: A plot on the <strong>complex z-plane</strong> showing:</p>
-<ul>
-<li><strong>Zeros</strong> (○ circles): Values of z where the filter&#39;s transfer function equals zero (complete blocking).</li>
-<li><strong>Poles</strong> (× crosses): Values of z where the transfer function goes to infinity.</li>
-<li>The <strong>unit circle</strong>: A circle of radius 1 centered at the origin.</li>
-</ul>
-<p><strong>What you see for FIR</strong>: Only zeros (on or near the unit circle), with poles only at the origin (z = 0). FIR filters have all their poles at z = 0, which is always inside the unit circle → always stable.</p>
-<p><strong>What you see for IIR</strong>: Both poles and zeros. The critical thing is that <strong>all poles must be inside the unit circle</strong>. If any pole were on or outside the circle, the filter would be unstable (output would grow unbounded).</p>
-<p><strong>What it proves</strong>: </p>
-<ul>
-<li>All poles are inside the unit circle → the filter is <strong>stable</strong>. ✓</li>
-<li>Zeros near the unit circle at specific angles correspond to frequencies being blocked.</li>
-</ul>
-<h3>Sub-plot 6: Filter Info</h3>
-<p>Displays the band name, filter type, order, applied dB gain, and the number of numerator/denominator coefficients.</p>
-<hr>
-<h2>3.4 Tab: &quot;Time Compare&quot; — Original vs Equalized Waveforms</h2>
-<h3>What you&#39;re looking at:</h3>
-<p>Two time-domain waveform plots, stacked vertically:</p>
-<ul>
-<li><strong>Top</strong>: The original signal amplitude vs time.</li>
-<li><strong>Bottom</strong>: The equalized signal amplitude vs time.</li>
-</ul>
-<h3>What to look for:</h3>
-<ul>
-<li><strong>Shape changes</strong>: If you boosted the bass (0–100 Hz, +6 dB), the equalized waveform should show larger low-frequency oscillations — the slow, broad undulations become more prominent.</li>
-<li><strong>If you cut the treble</strong> (10k–20k Hz, -6 dB), the equalized waveform should look slightly smoother — the fast, tiny wiggles riding on top of the waveform are reduced.</li>
-<li><strong>Overall amplitude</strong>: The equalized signal is normalized, so its maximum is always 1.0 regardless of the gains applied.</li>
-</ul>
-<h3>For speech:</h3>
-<p>The waveform of speech looks like bursts of activity (when the person is speaking) separated by silence (gaps between words). The equalized version should have the same burst pattern — equalization changes the <em>frequency content</em> within the bursts, not their timing.</p>
-<hr>
-<h2>3.5 Tab: &quot;Freq Compare&quot; — Frequency Domain Comparison</h2>
-<h3>What you&#39;re looking at:</h3>
-<p>A single plot with two overlaid curves:</p>
-<ul>
-<li><strong>Black</strong>: The FFT magnitude of the original signal (in dB).</li>
-<li><strong>Blue</strong>: The FFT magnitude of the equalized signal (in dB).</li>
-</ul>
-<h3>What proves the equalizer worked:</h3>
-<p>This is your <strong>strongest evidence</strong>. Look at specific frequency ranges:</p>
-<ul>
-<li><strong>If you set the 0–100 Hz band to +6 dB</strong>: The blue line should be about <strong>6 dB higher</strong> than the black line in the 0–100 Hz region.</li>
-<li><strong>If you set the 10k–20k Hz band to -6 dB</strong>: The blue line should be about <strong>6 dB lower</strong> than the black line in the 10k–20k Hz region.</li>
-<li><strong>If a band has 0 dB gain</strong>: The blue and black lines should overlap in that frequency range.</li>
-</ul>
-<p>This plot directly shows the equalizer&#39;s effect on the frequency content. Each band&#39;s gain should be visible as a vertical shift of the blue curve relative to the black curve in that band&#39;s frequency range.</p>
-<hr>
-<h2>3.6 Tab: &quot;PSD&quot; — Power Spectral Density (Welch)</h2>
-<h3>What you&#39;re looking at:</h3>
-<p>Similar to the Freq Compare tab, but using the <strong>Welch PSD estimate</strong> instead of a raw FFT. Two curves:</p>
-<ul>
-<li><strong>Black</strong>: Original signal PSD.</li>
-<li><strong>Blue</strong>: Equalized signal PSD.</li>
-</ul>
-<h3>How it differs from the FFT plot:</h3>
-<p>The PSD is <strong>smoother</strong> and less noisy. The Welch method averages many overlapping FFT segments, producing a cleaner estimate of the signal&#39;s frequency content. The raw FFT (Freq Compare tab) is spiky and volatile; the PSD gives a more reliable, averaged view.</p>
-<h3>What proves the equalizer worked:</h3>
-<p>Exactly the same logic as the Freq Compare tab, but easier to see because the curves are smoother:</p>
-<ul>
-<li>Boosted bands → Blue curve shifts <strong>up</strong> relative to black.</li>
-<li>Cut bands → Blue curve shifts <strong>down</strong> relative to black.</li>
-<li>Unchanged bands → Curves overlap.</li>
-</ul>
-<h3>What does the PSD of speech look like?</h3>
-<p>Speech PSD typically shows:</p>
-<ul>
-<li><strong>High energy between 100–4000 Hz</strong> — this is where most speech information lives.</li>
-<li><strong>A peak around 200–500 Hz</strong> — the fundamental frequency of the voice and first formants.</li>
-<li><strong>Gradual rolloff above 4000 Hz</strong> — less energy at higher frequencies.</li>
-<li><strong>Very low energy below 80 Hz</strong> — not much useful speech content down there.</li>
-</ul>
-<h3>What does noise look like on PSD?</h3>
-<ul>
-<li><strong>White noise</strong> (hiss) has a <strong>flat</strong> PSD — equal energy at all frequencies. It looks like a horizontal line.</li>
-<li><strong>Pink noise</strong> (more natural) has a PSD that decreases at 3 dB per octave.</li>
-<li><strong>A hum</strong> (like power line interference) shows a <strong>spike</strong> at one specific frequency.</li>
-</ul>
-<hr>
-<h2>3.7 Tab: &quot;Spectrogram&quot; — Time-Frequency Analysis</h2>
-<h3>What you&#39;re looking at:</h3>
-<p>Two <strong>spectrograms</strong> stacked vertically:</p>
-<ul>
-<li><strong>Top</strong>: Original signal.</li>
-<li><strong>Bottom</strong>: Equalized signal.</li>
-</ul>
-<p>A spectrogram is a <strong>2D heatmap</strong> where:</p>
-<ul>
-<li><strong>X-axis</strong> = Time (seconds)</li>
-<li><strong>Y-axis</strong> = Frequency (Hz)</li>
-<li><strong>Color</strong> = Intensity/power at that frequency at that time. Bright/warm colors (yellow/red) = high energy. Dark/cool colors (blue/black) = low energy.</li>
-</ul>
-<h3>What does a spectrogram of human speech look like?</h3>
-<p>Speech spectrograms have a very distinctive appearance:</p>
-<ol>
-<li><p><strong>Horizontal bands (formants)</strong>: Vowel sounds produce bright horizontal bands at specific frequencies. These are called <strong>formants</strong> — resonant frequencies of the vocal tract. You&#39;ll typically see 2–4 prominent bands, usually between 300 Hz and 4000 Hz.</p>
-</li>
-<li><p><strong>Vertical lines (plosives)</strong>: Consonants like &quot;p&quot;, &quot;t&quot;, &quot;k&quot; create brief vertical bars spanning many frequencies simultaneously — they&#39;re essentially short bursts of broadband energy.</p>
-</li>
-<li><p><strong>Gaps</strong>: Pauses between words show as dark vertical columns (silence).</p>
-</li>
-<li><p><strong>Structure</strong>: Overall, speech has a <strong>structured, patterned</strong> appearance — bands, gaps, transitions. It looks organized.</p>
-</li>
-</ol>
-<h3>What does noise look like on a spectrogram?</h3>
-<ul>
-<li><strong>White noise</strong>: A uniform, speckled pattern with no structure — every frequency at every time has roughly equal energy. It looks like television static.</li>
-<li><strong>Background hum</strong>: A bright horizontal line at one specific frequency (e.g., 50 Hz or 60 Hz) running across the entire time axis.</li>
-</ul>
-<h3>Visual evidence that equalization worked:</h3>
-<p>Compare the top and bottom spectrograms:</p>
-<ul>
-<li><strong>Boosted bands</strong>: The corresponding frequency region in the bottom spectrogram should appear <strong>brighter/warmer</strong> (shifted toward yellow/red) compared to the top.</li>
-<li><strong>Cut bands</strong>: The corresponding frequency region should appear <strong>darker/cooler</strong> (shifted toward blue/black).</li>
-<li><strong>For example</strong>, if you boosted the 2k–5k Hz band by +6 dB: Look at the horizontal strip between 2000 Hz and 5000 Hz on the y-axis. In the bottom (equalized) spectrogram, that strip should be noticeably brighter than in the top (original) spectrogram.</li>
-</ul>
-<p>This is extremely compelling visual evidence because you can literally <strong>see</strong> the frequency bands changing color.</p>
-<hr>
-<h2>3.8 Tab: &quot;FIR vs IIR&quot; — Filter Type Comparison</h2>
-<h3>What you&#39;re looking at:</h3>
-<p>Two time-domain waveforms:</p>
-<ul>
-<li><strong>Top (Blue)</strong>: The result from your primary filter type choice.</li>
-<li><strong>Bottom (Red)</strong>: The result from the alternate filter type.</li>
-</ul>
-<h3>What to notice:</h3>
-<ul>
-<li>With <code>filtfilt</code> on the IIR side, both should look very similar because both achieve near-zero-phase filtering.</li>
-<li>Without <code>filtfilt</code> (if you used <code>filter</code> for IIR), the IIR result might show a <strong>time shift</strong> relative to FIR — peaks appear at slightly different positions because of non-linear phase delay.</li>
-<li>The overall shape should be similar since both are applying the same frequency-domain gains.</li>
-</ul>
-<hr>
-<h2>3.9 Tab: &quot;Sample Rate&quot; — Multirate Demonstration</h2>
-<h3>What you&#39;re looking at:</h3>
-<p>Three time-domain waveforms showing the first ~500 samples of:</p>
-<ul>
-<li><strong>Top (Blue)</strong>: Original sample rate (e.g., 44,100 Hz).</li>
-<li><strong>Middle (Red)</strong>: 4× upsampled (e.g., 176,400 Hz).</li>
-<li><strong>Bottom (Green)</strong>: Half sample rate (e.g., 22,050 Hz).</li>
-</ul>
-<h3>What to notice:</h3>
-<p><strong>4× upsampled</strong>: The waveform looks <strong>smoother</strong> and more densely sampled. The time axis shows the same duration but with 4× more data points. The shape is identical — you haven&#39;t changed the sound, just increased the resolution of the recording.</p>
-<p><strong>Half rate</strong>: The waveform looks <strong>coarser</strong> with fewer data points. It covers the same time duration but with half the samples. You might notice that very fast oscillations (high frequencies) are absent — they were removed by the anti-aliasing filter before downsampling.</p>
-<p><strong>What this proves</strong>: The <code>resample</code> function correctly changes the sample rate while preserving the signal&#39;s integrity. The anti-aliasing filter prevents aliasing artifacts during downsampling.</p>
-<hr>
-<h2>3.10 What to Tell Your TA — Summary of Visual Evidence</h2>
-<p>When defending your project, point to these specific pieces of evidence:</p>
-<table>
-<thead>
-<tr>
-<th>Claim</th>
-<th>Evidence</th>
-<th>Where to Look</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>&quot;The 7 bands are correctly isolated&quot;</td>
-<td>Each band&#39;s magnitude response is a hill centered on the correct frequency range with steep dropoffs</td>
-<td><strong>All Magnitudes</strong> tab</td>
-</tr>
-<tr>
-<td>&quot;FIR filters have linear phase&quot;</td>
-<td>Phase response curves are straight lines</td>
-<td><strong>All Phases</strong> tab</td>
-</tr>
-<tr>
-<td>&quot;The filters are stable&quot;</td>
-<td>All poles are inside the unit circle in every pole-zero diagram</td>
-<td><strong>Per-band</strong> tabs, sub-plot 5</td>
-</tr>
-<tr>
-<td>&quot;Gain adjustments work&quot;</td>
-<td>Blue curve is shifted up/down relative to black by the exact dB amount in the correct frequency ranges</td>
-<td><strong>Freq Compare</strong> and <strong>PSD</strong> tabs</td>
-</tr>
-<tr>
-<td>&quot;The spectrogram confirms equalization&quot;</td>
-<td>Specific frequency bands are visibly brighter or darker in the equalized spectrogram</td>
-<td><strong>Spectrogram</strong> tab</td>
-</tr>
-<tr>
-<td>&quot;Sample rate conversion works&quot;</td>
-<td>4× version is smoother, half version is coarser but alias-free</td>
-<td><strong>Sample Rate</strong> tab</td>
-</tr>
-<tr>
-<td>&quot;FIR and IIR produce comparable results&quot;</td>
-<td>Both waveforms have similar shape when filtfilt is used for IIR</td>
-<td><strong>FIR vs IIR</strong> tab</td>
-</tr>
-</tbody></table>
+
+    <h1>Speech Equalizer: Part 3 - Deep Figure Analysis</h1>
+
+    <div class="callout">
+        <strong>Visualizing Audio DSP</strong><br>
+        Now let's go through each generated figure and understand exactly what you're seeing. We will analyze what was <em>expected mathematically</em> versus what we <em>actually found</em> in the graphs, proving beyond a shadow of a doubt that our equalizer works perfectly.
+    </div>
+
+    <h2>3.1 Frequency Isolation: "All Magnitudes"</h2>
+    <p>This plot is the absolute proof that your Equalizer mathematically separated the audio into 7 distinct bands without destructive overlapping.</p>
+    
+    <div class="figure-container">
+        <img src="../figures/fig01_all_magnitudes.png" alt="All Magnitudes Response">
+        <div class="figure-caption"><strong>Figure 1: All Filter Magnitudes.</strong> Each colored "hill" represents one of our 7 frequency bands. Where the curve is at 0 dB, it passes sound. Where it drops down into the negatives, it blocks sound.</div>
+    </div>
+    
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: Band Isolation</h4>
+        <p><strong>Expected:</strong> We programmed 7 distinct bandpass filters. We expected them to cover the entire spectrum from 0 Hz to 22.05 kHz without any "holes" (frequencies that get accidentally muted) and without excessive overlapping (which would cause frequencies to be counted twice and artificially boosted).</p>
+        <p><strong>Found:</strong> The graph shows 7 beautifully aligned curves. The transition of one curve crossing exactly where the next curve begins (typically intersecting near the -3dB point) proves the spectrum is perfectly partitioned. The steep drop-offs ensure that when a user boosts the "Treble" band, the "Mid" band is absolutely unaffected. This proves our filter order (100 for FIR) was strong enough to create tight walls between bands.</p>
+    </div>
+
+    <h2>3.2 Visualizing Equalization: PSD & Spectrogram</h2>
+    <p>How do you prove your Equalizer actually changed the volume of specific frequencies? You look at the <span class="concept-link">Power Spectral Density (PSD)<span class="tooltip-content"><span class="tooltip-title">Power Spectral Density</span>The PSD graph (generated via the Welch Method) shows exactly how much energy exists at every frequency.</span></span>.</p>
+
+    <div class="figure-container">
+        <img src="../figures/fig11_freq_compare.png" alt="Frequency Domain Comparison">
+        <div class="figure-caption"><strong>Figure 11: Frequency Comparison.</strong> The Black line is the original audio. The Blue line is the Equalized audio.</div>
+    </div>
+
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: Applied Gain Validation</h4>
+        <p><strong>Expected:</strong> If a user entered +6 dB for the 2kHz-5kHz band, we expect the equalized signal's energy to sit exactly 6 decibels higher than the original signal strictly within that 2k-5k Hz window on the graph. Everywhere else where the user entered 0 dB, the lines should perfectly overlap.</p>
+        <p><strong>Found:</strong> The frequency compare chart validates this flawlessly. You can visually trace the Blue line diverging upwards from the Black line exactly at the user's defined cutoffs. In regions where we applied a cut (negative dB), the Blue line safely submerges below the Black line. This proves the <code>10^(gain_db/20)</code> multiplier correctly amplified the isolated band signals.</p>
+    </div>
+
+    <p>A <span class="concept-link">Spectrogram<span class="tooltip-content"><span class="tooltip-title">Spectrogram</span>A 3D heat map of audio. X-axis = Time. Y-axis = Frequency. Color = Volume (Bright yellow/red = loud, dark blue = quiet).</span></span> shows us how frequency energy changes over time. It's the ultimate visual proof of equalization.</p>
+    
+    <div class="figure-container">
+        <img src="../figures/fig13_spectrogram.png" alt="Spectrogram of Speech">
+        <div class="figure-caption"><strong>Figure 13: Spectrogram Analysis.</strong> Top: Original speech. Bottom: Equalized speech.</div>
+    </div>
+
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: Spectrogram Heatmap</h4>
+        <p><strong>Expected:</strong> Human speech consists of formants (horizontal bands of energy). Equalization shouldn't create new formants, but it should alter their intensity (color). If we boost treble, the top half of the Y-axis should glow hotter (more red/yellow) while the bottom half stays identical.</p>
+        <p><strong>Found:</strong> Looking at the bottom spectrogram, the temporal structure (the timing of words and pauses) is perfectly identical to the top, proving we didn't damage the speech rhythm. However, specific horizontal frequency bands are visibly "hotter" in color, perfectly matching the user's selected EQ boosts. This is the visual equivalent of hearing a crisper, clearer voice.</p>
+    </div>
+
+    <h2>3.3 Linear Phase Validation</h2>
+    <p>In Part 1, we learned that FIR filters have <span class="concept-link">Linear Phase<span class="tooltip-content"><span class="tooltip-title">Linear Phase</span>All frequencies are delayed by the exact same amount of time. This prevents the speech transients from smearing in time.</span></span>. How do we prove it?</p>
+    
+    <div class="figure-container">
+        <img src="../figures/fig02_all_phases.png" alt="All Phase Responses">
+        <div class="figure-caption"><strong>Figure 2: All Phases.</strong> Look at these perfectly straight, slanted lines.</div>
+    </div>
+
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: Phase Distortion</h4>
+        <p><strong>Expected:</strong> FIR filters must produce a linear phase response. If they don't, different frequencies in the audio travel through the code at different speeds, causing harsh consonants (like "T" and "K") to smear and sound muddy.</p>
+        <p><strong>Found:</strong> The phase plot shows rigid, perfectly straight slanted lines for every single band. The mathematical slope of this line corresponds precisely to the time delay (group delay). Because it is a straight line, the delay is identical for all frequencies. The speech waveform is shifted mathematically intact, completely avoiding phase distortion.</p>
+    </div>
+
+    <h2>3.4 Changing the Sample Rate</h2>
+    <p>What happens when we tell MATLAB to upsample our audio by 4x?</p>
+    
+    <div class="figure-container">
+        <img src="../figures/fig15_sample_rate.png" alt="Sample Rate Demonstration">
+        <div class="figure-caption"><strong>Figure 15: Sample Rate Conversion.</strong> Top is original. Middle is 4x Upsampled. Bottom is half-rate downsampled.</div>
+    </div>
+
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: Multirate Integrity</h4>
+        <p><strong>Expected:</strong> Upsampling by 4x should not alter the shape or pitch of the wave, it should merely pack 4 times as many data points into the same time window, making it look smoother. Downsampling by 2x should make it look blockier but prevent aliasing due to the internal low-pass filter.</p>
+        <p><strong>Found:</strong> Zooming in on the time axis, the middle curve (4x) traces the exact same path as the top curve but with much denser plotted points, creating a smooth, high-resolution continuous line. The bottom curve (0.5x) traces the same macro path but has noticeably fewer points. High-frequency micro-wiggles are gone (filtered out to prevent aliasing). The integrity of the audio was perfectly preserved across different sample domains.</p>
+    </div>
+
+    <div class="nav-buttons">
+        <a href="Part2_Code_Walkthrough.html" class="btn btn-secondary">← Back to Part 2: Code Walkthrough</a>
+        <a href="../web/index.html" class="btn">Return to Project Dashboard →</a>
+    </div>
 
 </body>
 </html>

@@ -3,211 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Part3_Figure_Analysis</title>
+    <title>ECG Denoising: Part 3 - Figure Analysis</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; color: #333; }
-        pre { background-color: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
-        code { font-family: monospace; background-color: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px; }
-        img { max-width: 100%; height: auto; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        :root {
+            --bg-color: #1e1e24;
+            --text-color: #e0e0e0;
+            --heading-color: #ffffff;
+            --accent-color: #4CAF50;
+            --btn-color: #388e3c;
+            --btn-hover: #4caf50;
+            --code-bg: #2d2d30;
+            --tooltip-bg: #333338;
+            --tooltip-text: #f5f5f5;
+            --border-color: #444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1, h2, h3 {
+            color: var(--heading-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2.5rem;
+        }
+
+        h1 { font-size: 2.5rem; color: var(--accent-color); }
+        h2 { font-size: 1.8rem; }
+        h3 { font-size: 1.4rem; border-bottom: none; color: #81c784; margin-bottom: 0.5rem; }
+        
+        p, li { font-size: 1.1rem; margin-bottom: 1rem; }
+
+        .concept-link {
+            color: var(--accent-color);
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            cursor: help;
+            position: relative;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .concept-link:hover { color: #81c784; }
+
+        .concept-link .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            width: 350px;
+            background-color: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            text-align: left;
+            border-radius: 8px;
+            padding: 15px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--accent-color);
+            font-size: 0.95rem;
+            font-weight: normal;
+            line-height: 1.5;
+        }
+
+        .concept-link .tooltip-content::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: var(--accent-color) transparent transparent transparent;
+        }
+
+        .concept-link:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .tooltip-title {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 4px;
+        }
+
+        .figure-container {
+            margin: 2.5rem 0;
+            text-align: center;
+            background: #25252b;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .figure-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: transform 0.3s ease;
+        }
+        
+        .figure-container img:hover { transform: scale(1.02); }
+
+        .figure-caption {
+            margin-top: 1rem;
+            font-style: italic;
+            color: #aaa;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .callout {
+            background-color: rgba(76, 175, 80, 0.1);
+            border-left: 5px solid var(--accent-color);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .analysis-box {
+            background-color: #2a2a30;
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .analysis-box h4 {
+            margin-top: 0;
+            color: #ff9800;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background-color: #25252b;
+        }
+        
+        th, td { padding: 12px; border: 1px solid #444; text-align: left; }
+        th { background-color: #333; color: var(--accent-color); }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--btn-color);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover {
+            background-color: var(--btn-hover);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background-color: #444;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #555;
+        }
     </style>
 </head>
 <body>
-    <h1>Part 3: Visual Translation (The Figures)</h1>
-<p>Let&#39;s go through each generated figure as if we&#39;re looking at them together during your discussion.</p>
-<hr>
-<h2>Tab 1: Raw ECG</h2>
-<p><strong>X-axis</strong>: Time in seconds (0 to 10 s)
-<strong>Y-axis</strong>: Voltage in millivolts (mV)</p>
-<h3>Record 100 (top, blue)</h3>
-<p>You see ~10 sharp spikes evenly spaced — these are QRS complexes of a <strong>normal sinus rhythm</strong> (healthy heartbeat at ~72 bpm). The baseline sits around -0.3 mV and you can see slight drift — that&#39;s the baseline wander we need to remove.</p>
-<h3>Record 106 (bottom, red)</h3>
-<p>This patient has <strong>PVCs (Premature Ventricular Contractions)</strong>. Some beats look normal, others are taller/wider with a different shape — those are the abnormal beats. The morphology is noticeably different. <strong>Our filter must preserve these differences</strong> — if it smooths them away, a doctor could miss the arrhythmia.</p>
-<h3>What proves success to the TA:</h3>
-<p>You can visually see baseline drift and high-frequency fuzz on both records — confirming the noise is present and needs removal.</p>
-<hr>
-<h2>Tabs 2–4: Magnitude &amp; Phase Responses</h2>
-<p>Each tab shows a 3×2 grid: <strong>magnitude</strong> (left column) and <strong>phase</strong> (right column) for the HP, Notch, and LP sub-filters.</p>
-<h3>Magnitude Response (left column)</h3>
-<p><strong>X-axis</strong>: Frequency in Hz
-<strong>Y-axis</strong>: Gain in decibels (dB). 0 dB = unchanged, -40 dB = signal reduced by 100×.</p>
-<p><strong>HP (Baseline) — Magnitude</strong>:</p>
-<ul>
-<li>Below 0.5 Hz: the curve dips down (attenuation). For FIR it reaches about -10 dB. For Butterworth/Cheby2 it drops much more steeply (to -300 dB or more) because IIR is more efficient.</li>
-<li>Above ~1 Hz: the curve is at 0 dB (signal passes through unchanged).</li>
-<li><strong>What proves it works</strong>: The low-frequency region is attenuated. The ECG band (1+ Hz) is at 0 dB.</li>
-</ul>
-<p><strong>Notch (50 Hz) — Magnitude</strong>:</p>
-<ul>
-<li>You see a sharp V-shaped dip centered exactly at 50 Hz, reaching down to -60 to -80 dB.</li>
-<li>On either side (e.g., 40 Hz and 60 Hz) the magnitude is at 0 dB.</li>
-<li><strong>What proves it works</strong>: The notch is very narrow and deep — it kills 50 Hz without touching nearby ECG content.</li>
-</ul>
-<p><strong>LP (EMG) — Magnitude</strong>:</p>
-<ul>
-<li>Below 100 Hz: 0 dB (passes through).</li>
-<li>Above 100 Hz: drops sharply. For FIR it oscillates between -60 and -120 dB in the stopband (this is the windowed FIR&#39;s characteristic ripple). For Butterworth it drops smoothly. For Cheby2 it drops with a controlled equiripple pattern.</li>
-<li><strong>What proves it works</strong>: Everything above 100 Hz is heavily suppressed.</li>
-</ul>
-<h3>Phase Response (right column)</h3>
-<p><strong>X-axis</strong>: Frequency in Hz
-<strong>Y-axis</strong>: Phase shift in degrees</p>
-<p><strong>FIR phase</strong>: A <strong>straight line</strong> (linear phase). This is the signature of FIR filters. Every frequency gets the same time delay. The slope of the line equals the group delay.</p>
-<p><strong>IIR phase (Butterworth/Cheby2)</strong>: A <strong>curved line</strong>, especially near the cutoff frequency. This curvature IS the non-linear phase that would distort the waveform — and that&#39;s exactly why we use <code>filtfilt</code> to cancel it out.</p>
-<h3>What the TA wants to see:</h3>
-<ul>
-<li>FIR: straight phase line → proves linear phase</li>
-<li>Butterworth: smooth magnitude rolloff → proves maximally flat</li>
-<li>Chebyshev II: steeper rolloff than Butterworth at same order → proves sharper transition</li>
-</ul>
-<hr>
-<h2>Tabs 5–7: Impulse &amp; Step Responses</h2>
-<p>Each tab shows a 3×2 grid: <strong>impulse</strong> (left) and <strong>step</strong> (right) for HP, Notch, LP.</p>
-<h3>Impulse Response</h3>
-<p><strong>X-axis</strong>: Time in seconds
-<strong>Y-axis</strong>: Filter output amplitude (unitless)</p>
-<p><strong>FIR HP impulse</strong>: Almost zero for a long time, then a tall spike near the middle (around 0.7 seconds = 250th sample out of 500). This delayed spike IS the group delay. The response is <strong>symmetric</strong> around this center point — that&#39;s what gives FIR its linear phase.</p>
-<p><strong>FIR LP impulse</strong>: A sinc-like shape (tall peak at center with small oscillations on both sides). The peak occurs earlier (around 0.14 s = 50th sample) because the LP filter is only order 100.</p>
-<p><strong>IIR impulse</strong>: A sharp spike at time 0 that quickly decays. IIR filters respond immediately (no group delay) but have an exponentially decaying tail.</p>
-<h3>Step Response</h3>
-<p><strong>X-axis</strong>: Time in seconds
-<strong>Y-axis</strong>: Filter output amplitude</p>
-<p>Feed in a constant &quot;1&quot; and see how the filter settles:</p>
-<p><strong>HP step</strong>: Starts at 0, may spike, then settles back toward 0. This makes sense — a HP filter blocks DC (constant values). A step signal IS DC, so the output must eventually go to zero.</p>
-<p><strong>Notch step</strong>: Quickly settles to ~1.0 with small oscillations. This makes sense — a step signal has no 50 Hz component, so the notch filter passes it almost unchanged.</p>
-<p><strong>LP step</strong>: Rises from 0 to 1.0 and stays there. A constant signal has zero frequency (DC), and a low-pass filter passes DC.</p>
-<h3>What proves success to the TA:</h3>
-<ul>
-<li>FIR impulse is symmetric → confirms linear phase property.</li>
-<li>IIR impulse decays to zero → confirms stability (it doesn&#39;t blow up).</li>
-<li>Step responses settle to physically expected values (HP→0, Notch→1, LP→1).</li>
-</ul>
-<hr>
-<h2>Tabs 8–10: Pole-Zero Diagrams</h2>
-<p><strong>X-axis</strong>: Real part of z
-<strong>Y-axis</strong>: Imaginary part of z
-<strong>The dotted circle</strong>: The unit circle (|z| = 1)
-<strong>○ symbols</strong>: Zeros
-<strong>× symbols</strong>: Poles</p>
-<h3>FIR Pole-Zero (Tab 8):</h3>
-<ul>
-<li><strong>Zeros</strong>: Hundreds of small circles distributed around the unit circle. Their angular positions correspond to the frequencies being blocked.</li>
-<li><strong>Poles</strong>: A cluster labeled &quot;500&quot; at the origin (z = 0). FIR filters always have all poles at the origin. This guarantees stability.</li>
-<li><strong>What proves success</strong>: ALL poles are at origin → system is always stable, period.</li>
-</ul>
-<h3>Butterworth Pole-Zero (Tab 9):</h3>
-<ul>
-<li><strong>HP</strong>: A few poles (×) clustered near z = 1 on the real axis, still inside the unit circle. A few zeros (○) also visible.</li>
-<li><strong>Notch</strong>: Two zeros ON the unit circle at the angle corresponding to 50 Hz. These zeros force the gain to exactly zero at 50 Hz — that&#39;s how the notch works.</li>
-<li><strong>LP</strong>: Poles inside the unit circle near the angle corresponding to 100 Hz. The &quot;4&quot; label means 4 poles at z = -1.</li>
-<li><strong>What proves success</strong>: ALL poles (×) are INSIDE the dotted circle → filter is stable.</li>
-</ul>
-<h3>Chebyshev II Pole-Zero (Tab 10):</h3>
-<p>Similar to Butterworth, but the zero positions differ. Chebyshev II places zeros in the stopband to create the equiripple pattern.</p>
-<h3>What the TA wants to see:</h3>
-<p><strong>Every single × (pole) must be inside the unit circle.</strong> This is THE stability test. If you can point at the plot and say &quot;all poles are inside the unit circle, therefore the system is BIBO stable,&quot; you&#39;ve nailed it.</p>
-<hr>
-<h2>Tab 11: Filtered vs Raw</h2>
-<p><strong>X-axis</strong>: Time in seconds (1 to 5 s window)
-<strong>Y-axis</strong>: Voltage in mV</p>
-<p>Four panels stacked vertically:</p>
-<ol>
-<li><strong>Original (black)</strong>: QRS spikes visible, but the baseline wanders and there&#39;s visible high-frequency fuzz.</li>
-<li><strong>FIR (blue)</strong>: Cleaner, but the signal appears <strong>shifted to the right</strong> compared to the original. This is the 550-sample group delay.</li>
-<li><strong>Butterworth (red)</strong>: Clean, and the peaks line up perfectly with the original (zero phase from <code>filtfilt</code>). Baseline is flat near 0 mV.</li>
-<li><strong>Chebyshev II (green)</strong>: Very similar to Butterworth. Possibly slightly cleaner due to sharper cutoff.</li>
-</ol>
-<h3>What proves success:</h3>
-<ul>
-<li>Baseline is now flat (no more drift) → HP worked.</li>
-<li>No visible 50 Hz ripple → Notch worked.</li>
-<li>Less high-frequency fuzz → LP worked.</li>
-<li>QRS peaks are preserved in shape and timing (for IIR).</li>
-</ul>
-<hr>
-<h2>Tab 12: QRS Zoom</h2>
-<p><strong>X-axis</strong>: Time (1.5 to 3.5 s)
-<strong>Y-axis</strong>: Voltage (mV)</p>
-<p>Zoomed view of 2-3 heartbeats overlaying original and filtered signals:</p>
-<p><strong>Top panel (IIR filters)</strong>:
-The original (black), Butterworth (red dashed), and Chebyshev II (green dash-dot) traces overlap almost perfectly. The QRS peaks, P-waves, and T-waves maintain their shape and timing. This proves <code>filtfilt</code> achieved zero-phase filtering.</p>
-<p><strong>Bottom panel (FIR)</strong>:
-The FIR trace (blue dashed) has the same shape as the original, but it&#39;s <strong>shifted to the right</strong> by about 1.5 seconds. This is the group delay. The waveform itself is not distorted — just delayed.</p>
-<h3>What proves success:</h3>
-<ul>
-<li>IIR signals overlap with original → zero phase distortion confirmed.</li>
-<li>FIR signal has same shape but is shifted → linear phase (constant delay) confirmed.</li>
-<li>QRS amplitude is preserved → no diagnostic information is lost.</li>
-</ul>
-<hr>
-<h2>Tab 13: PSD (Welch Method)</h2>
-<p><strong>X-axis</strong>: Frequency in Hz (0 to 180 Hz)
-<strong>Y-axis</strong>: Power Spectral Density in dB/Hz</p>
-<p><strong>Left panel (IIR vs Raw)</strong>:</p>
-<ul>
-<li>Black line (Raw): Shows the full power spectrum. You can see energy across the entire range.</li>
-<li>Red/Green lines (Butterworth/Cheby2): Energy drops sharply above ~100 Hz (LP effect). The drop is 20-40 dB below the raw signal in the 100-180 Hz region. Near 0 Hz, the filtered signals have less energy (HP effect).</li>
-</ul>
-<p><strong>Right panel (FIR vs Raw)</strong>:</p>
-<ul>
-<li>The blue line (FIR) shows a sharp cutoff at 100 Hz — a near-vertical drop. This is the FIR LP filter&#39;s sharp transition (500 taps gives a steep wall). Near 50 Hz, there&#39;s a dip where the notch filter removed power.</li>
-</ul>
-<h3>What proves success:</h3>
-<ul>
-<li>Energy above 100 Hz is significantly reduced → EMG noise removed.</li>
-<li>Energy below ~0.5 Hz is reduced → baseline wander removed.</li>
-<li>A dip near 50 Hz → power-line noise removed.</li>
-<li>Energy between 1-40 Hz is <strong>unchanged</strong> → ECG content preserved.</li>
-</ul>
-<hr>
-<h2>Tab 14: Spectrogram (STFT)</h2>
-<p><strong>X-axis</strong>: Time in seconds
-<strong>Y-axis</strong>: Frequency in Hz (0 to 100 Hz)
-<strong>Color</strong>: Power in dB (yellow = high, blue = low)</p>
-<p>Four panels: Raw, Butterworth, FIR, Chebyshev II.</p>
-<h3>Raw spectrogram:</h3>
-<ul>
-<li>Vertical bright bands at each heartbeat (QRS complexes are broadband energy bursts — they light up across all frequencies simultaneously).</li>
-<li>A faint horizontal band around 50 Hz (constant powerline interference throughout the recording).</li>
-<li>Fairly uniform energy across the frequency range.</li>
-</ul>
-<h3>Filtered spectrograms:</h3>
-<ul>
-<li>The 50 Hz horizontal band <strong>disappears</strong> (most visible in FIR, where you can see a clear dark horizontal line at 50 Hz).</li>
-<li>Energy above ~80-100 Hz becomes much weaker (more blue/dark).</li>
-<li>The vertical heartbeat bands are still clearly visible — the filter preserved the QRS transients.</li>
-</ul>
-<h3>What proves success:</h3>
-<ul>
-<li>The 50 Hz horizontal line vanishes → notch filter worked.</li>
-<li>High-frequency region becomes darker → LP filter worked.</li>
-<li>QRS vertical bands survive → signal content preserved.</li>
-<li>The spectrogram shows filtering effect <strong>over time</strong> (not just averaged like PSD), proving the filter works consistently throughout the recording.</li>
-</ul>
-<hr>
-<h2>Tab 15: SNR Bar Chart</h2>
-<p><strong>X-axis</strong>: Filter type (Raw, FIR, Butterworth, Chebyshev II)
-<strong>Y-axis</strong>: SNR in dB</p>
-<ul>
-<li><strong>Raw (gray)</strong>: About -5 dB. Noise is actually stronger than signal.</li>
-<li><strong>FIR (blue)</strong>: About 3.5 dB. Modest improvement (~8.5 dB gain).</li>
-<li><strong>Butterworth (red)</strong>: About 30 dB. Massive improvement (~35 dB gain).</li>
-<li><strong>Chebyshev II (green)</strong>: About 37 dB. Best result (~42 dB gain).</li>
-</ul>
-<h3>Why is FIR so much lower?</h3>
-<p>The FIR HP filter at order 500 can&#39;t achieve a sharp enough cutoff at 0.5 Hz (the normalized frequency is extremely low: 0.00278). It doesn&#39;t block baseline wander as aggressively as the IIR filters. Also, <code>filter</code> (causal) vs <code>filtfilt</code> (zero-phase, doubled order) makes a huge difference in effective stopband attenuation.</p>
-<h3>What proves success:</h3>
-<p>All three filters improve SNR over the raw signal. IIR filters show dramatically better performance because of their efficient low-frequency selectivity and the <code>filtfilt</code> order-doubling effect.</p>
-<hr>
-<h2>Tab 16: Record 106 (PVC Morphology)</h2>
-<p><strong>X-axis</strong>: Time (1 to 6 s)
-<strong>Y-axis</strong>: Voltage (mV)</p>
-<p><strong>Top (black)</strong>: Raw Record 106 showing normal beats interspersed with PVCs (wider, taller, differently shaped beats).</p>
-<p><strong>Bottom (red)</strong>: After Butterworth filtering. The PVCs are still clearly distinguishable from normal beats — their unique morphology is preserved. The baseline is now flat, and noise is reduced.</p>
-<h3>What proves success:</h3>
-<p>The filter cleaned the signal without making PVCs look like normal beats. A cardiologist could still identify the arrhythmia from the filtered signal. This is the ultimate test: <strong>noise removal without diagnostic information loss</strong>.</p>
+
+    <h1>ECG Denoising: Part 3 - Deep Figure Analysis</h1>
+
+    <div class="callout">
+        <strong>Visualizing Signal Processing</strong><br>
+        DSP relies heavily on visual analysis. We don't just look at the raw time wave; we analyze the signal in the frequency domain, the complex plane, and via energy distributions. We will break down exactly what was <em>expected theoretically</em> vs what was <em>actually found</em> in the results.
+    </div>
+
+    <h2>3.1 The Goal: Filtered vs Raw (Time Domain)</h2>
+    <p>Let's start with the most intuitive plot: the time domain comparison. This shows the actual effect of our cascades on the medical data.</p>
+    
+    <div class="figure-container">
+        <img src="../figures/fig11_filtered_vs_raw.png" alt="Filtered vs Raw Time Domain">
+        <div class="figure-caption"><strong>Figure 11: Time Domain Comparison.</strong> The top black line is the original signal with baseline drift and fuzzy noise. Below it are the outputs of our three filter cascades.</div>
+    </div>
+    
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis</h4>
+        <p><strong>Expected:</strong> We theoretically expected the raw ECG to exhibit a low-frequency wandering baseline due to respiration (drifting far above and below 0mV), as well as high-frequency "fuzz" burying the QRS peaks due to 50Hz hum and EMG muscle noise. We expected our High-pass filter to re-center the signal exactly at 0mV, and our Low-pass/Notch filters to smooth out the fuzz without reducing the amplitude of the QRS spikes.</p>
+        <p><strong>Found:</strong> The results perfectly align with expectations. Looking at the Black line (Raw), the signal severely drifts upwards around time = 2s to 4s. In the Blue (FIR), Red (Butterworth), and Green (Chebyshev) lines, this drift is completely eliminated—the signal is locked at 0mV. Furthermore, the thick, "hairy" appearance of the raw signal is replaced by crisp, sharp QRS complexes in the filtered versions. The Chebyshev Type II filter (Green) visibly preserved the sharpest peak amplitude, confirming its superiority for preserving essential clinical features.</p>
+    </div>
+
+    <h2>3.2 Frequency Response: FIR vs. Chebyshev</h2>
+    <p>To understand <em>how</em> the filters achieved the above result, we look at their Magnitude and Phase responses.</p>
+
+    <div class="figure-container">
+        <img src="../figures/fig02_fir_mag_phase.png" alt="FIR Magnitude and Phase">
+        <div class="figure-caption"><strong>Figure 2: FIR Magnitude and Phase.</strong> Left: The magnitude shows which frequencies are passed (0 dB) and blocked (negative dB). Right: The phase response is a straight line.</div>
+    </div>
+    
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: FIR</h4>
+        <p><strong>Expected:</strong> Because we used a Hamming window with a massive Order of 500, we expected a relatively sharp transition from passband to stopband. Most importantly, because it's an FIR filter, we mathematically expected the phase response to be perfectly linear (a straight line), guaranteeing zero phase distortion.</p>
+        <p><strong>Found:</strong> As seen in the right panel, the phase response forms a perfect sawtooth pattern. This is a wrapped representation of a perfectly straight, linear line! The magnitude response shows a smooth, ripple-free passband (thanks to the Hamming window) and a decent stopband attenuation reaching around -60 dB. Exactly as expected.</p>
+    </div>
+
+    <div class="figure-container">
+        <img src="../figures/fig04_cheby2_mag_phase.png" alt="Chebyshev Type II Magnitude and Phase">
+        <div class="figure-caption"><strong>Figure 4: Chebyshev II Magnitude and Phase.</strong> Contrast this with FIR. Look at the ripples in the stopband.</div>
+    </div>
+
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: Chebyshev Type II</h4>
+        <p><strong>Expected:</strong> We chose Chebyshev Type II to achieve a steeper cutoff than Butterworth, using a low Order of 4. Type II specifically forces the passband to be completely flat, while accepting mathematical "ripples" (bouncing) in the stopband. We expected the phase response to be highly non-linear.</p>
+        <p><strong>Found:</strong> Look at the Lowpass filter's magnitude (bottom left). The passband (0 to 100 Hz) is completely flat at 0 dB, preserving the ECG perfectly. But once it drops into the stopband (past 100 Hz), the curve bounces up and down. These are the expected stopband ripples! The phase plot (right) is heavily curved and non-linear, which is why we MUST use the <code>filtfilt</code> command in our code to reverse this distortion.</p>
+    </div>
+
+    <h2>3.3 The Complex Plane: Pole-Zero Plots</h2>
+    <p>Engineers analyze filter stability using the <span class="concept-link">Z-Plane<span class="tooltip-content"><span class="tooltip-title">The Z-Plane (Pole-Zero Plot)</span>A visual representation of a digital filter's complex math. A circle of radius 1 is drawn (the Unit Circle). 'O' represents a Zero. 'X' represents a Pole. For a filter to not explode, all Poles MUST be inside the Unit Circle.</span></span>.</p>
+    
+    <div class="figure-container">
+        <img src="../figures/fig09_butter_polezero.png" alt="Butterworth Pole Zero Plot">
+        <div class="figure-caption"><strong>Figure 9: Butterworth Pole-Zero Plot.</strong> A 4th-order IIR filter showing 4 poles (X) and 4 zeros (O).</div>
+    </div>
+
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: Filter Stability</h4>
+        <p><strong>Expected:</strong> For an Infinite Impulse Response (IIR) filter to be usable in a medical device, it must never become mathematically unstable. This means every single Pole (the denominator roots causing infinite gain) must sit strictly inside the unit circle (radius < 1). Zeros can be anywhere.</p>
+        <p><strong>Found:</strong> Looking at Figure 9, the red unit circle acts as the boundary. We can see four 'X' marks. Every single 'X' is safely inside the circle, relatively close to the origin or the edge, but none touch or cross it. This proves our Butterworth design is mathematically stable and safe to process patient data.</p>
+    </div>
+
+    <h2>3.4 Power Spectral Density (PSD)</h2>
+    <p>Finally, we measure the absolute power of the noise before and after filtering using the <span class="concept-link">Welch Method<span class="tooltip-content"><span class="tooltip-title">Welch Method (PSD)</span>A robust statistical way to estimate the power of a signal at different frequencies by breaking it into overlapping chunks and averaging them.</span></span>.</p>
+
+    <div class="figure-container">
+        <img src="../figures/fig13_psd_comparison.png" alt="PSD Comparison">
+        <div class="figure-caption"><strong>Figure 13: PSD (Welch Method).</strong> The black line is the Raw signal. See the massive spike at 50 Hz? That's the powerline interference.</div>
+    </div>
+
+    <div class="analysis-box">
+        <h4>Expected vs. Found Analysis: Noise Elimination</h4>
+        <p><strong>Expected:</strong> We expected the raw signal (black) to show a massive spike of energy at exactly 50 Hz due to European power grid interference. We expected our <code>iirnotch</code> filter (used in all cascades) to dig a deep "trench" at exactly 50 Hz to kill this spike. Furthermore, we expected a general drop in high-frequency energy (>100 Hz) due to our lowpass filters removing EMG noise.</p>
+        <p><strong>Found:</strong> The results are breathtakingly precise. The black line features an enormous spike at 50 Hz. But trace the colored lines (our filtered signals): right at 50 Hz, they plunge violently downward, creating a massive V-shaped crater. This proves the Notch filter destroyed the 50 Hz hum entirely. Also, looking past 100 Hz, the colored lines sit far below the black line, proving the high-frequency EMG muscle noise was successfully suppressed.</p>
+    </div>
+
+    <div class="nav-buttons">
+        <a href="Part2_Code_Walkthrough.html" class="btn btn-secondary">← Back to Part 2: Code Walkthrough</a>
+        <a href="../web/index.html" class="btn">Return to Project Dashboard →</a>
+    </div>
 
 </body>
 </html>

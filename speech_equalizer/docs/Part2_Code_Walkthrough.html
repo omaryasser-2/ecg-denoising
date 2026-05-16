@@ -3,320 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Part2_Code_Walkthrough</title>
+    <title>Speech Equalizer: Part 2 - Code Walkthrough</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; color: #333; }
-        pre { background-color: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
-        code { font-family: monospace; background-color: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px; }
-        img { max-width: 100%; height: auto; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
+        :root {
+            --bg-color: #1e1e24;
+            --text-color: #e0e0e0;
+            --heading-color: #ffffff;
+            --accent-color: #7c5cfc;
+            --code-bg: #1e1e1e; /* VS Code Dark */
+            --tooltip-bg: #333338;
+            --tooltip-text: #f5f5f5;
+            --border-color: #444;
+            --code-comment: #6a9955;
+            --code-keyword: #569cd6;
+            --code-string: #ce9178;
+            --code-func: #dcdcaa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.8;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        h1, h2, h3 {
+            color: var(--heading-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+            margin-top: 2.5rem;
+        }
+
+        h1 { font-size: 2.5rem; color: var(--accent-color); }
+        h2 { font-size: 1.8rem; }
+        h3 { font-size: 1.4rem; border-bottom: none; color: #a855f7; margin-bottom: 0.5rem; }
+
+        p, li { font-size: 1.1rem; margin-bottom: 1rem; }
+
+        /* Next-Gen Interactive Tooltip Styling */
+        .concept-link {
+            color: var(--accent-color);
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            cursor: help;
+            position: relative;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        .concept-link:hover { color: #a855f7; }
+
+        .concept-link .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            width: 350px;
+            background-color: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            text-align: left;
+            border-radius: 8px;
+            padding: 15px;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--accent-color);
+            font-size: 0.95rem;
+            font-weight: normal;
+            line-height: 1.5;
+        }
+
+        .concept-link .tooltip-content::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -8px;
+            border-width: 8px;
+            border-style: solid;
+            border-color: var(--accent-color) transparent transparent transparent;
+        }
+
+        .concept-link:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .tooltip-title {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            border-bottom: 1px solid #555;
+            padding-bottom: 4px;
+        }
+
+        /* IDE Style Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #d4d4d4;
+            margin-bottom: 2rem;
+        }
+
+        .c-comment { color: var(--code-comment); font-style: italic; }
+        .c-kw { color: var(--code-keyword); font-weight: bold; }
+        .c-str { color: var(--code-string); }
+        .c-func { color: var(--code-func); }
+
+        .callout {
+            background-color: rgba(124, 92, 252, 0.1);
+            border-left: 5px solid var(--accent-color);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover {
+            background-color: #6a4cdd;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary { background-color: #444; }
+        .btn-secondary:hover { background-color: #555; }
     </style>
 </head>
 <body>
-    <h1>Part 2: Line-by-Line Code Logic &amp; Algorithm</h1>
-<p>Now that you understand the foundational concepts, let&#39;s walk through every line of the MATLAB code and explain exactly what it does to the audio data.</p>
-<hr>
-<h2>2.1 Initialization (Lines 1–8)</h2>
-<pre><code class="language-matlab">%% Multi-Band Speech Equalizer for Podcast Enhancement
-% DSP Project - FIR &amp; IIR filter-based equalizer
-% Supports Preset (7-band) and Custom (5-10 band) modes
-clc; clear; close all;
 
-scriptDir = fileparts(mfilename(&#39;fullpath&#39;));
-figDir = fullfile(scriptDir, &#39;figures&#39;);
-if ~exist(figDir,&#39;dir&#39;), mkdir(figDir); end
-</code></pre>
-<ul>
-<li><code>clc</code> — Clears the MATLAB Command Window (removes old text output).</li>
-<li><code>clear</code> — Deletes all variables from the workspace (memory), so we start fresh.</li>
-<li><code>close all</code> — Closes all open figure windows.</li>
-<li><code>fileparts(mfilename(&#39;fullpath&#39;))</code> — Gets the directory where this <code>.m</code> file lives. <code>mfilename(&#39;fullpath&#39;)</code> returns the full path like <code>C:\...\speech_equalizer.m</code>, and <code>fileparts</code> strips the filename, leaving just the folder path.</li>
-<li><code>figDir = fullfile(scriptDir, &#39;figures&#39;)</code> — Creates the path <code>...\speech_equalizer\figures</code>.</li>
-<li><code>if ~exist(figDir,&#39;dir&#39;), mkdir(figDir); end</code> — If the <code>figures</code> folder doesn&#39;t exist yet, create it. This is where all generated plot images will be saved.</li>
-</ul>
-<hr>
-<h2>2.2 Audio Input (Lines 10–30)</h2>
-<pre><code class="language-matlab">fname = input(&#39;Audio file path (Enter for test signal): &#39;,&#39;s&#39;);
-</code></pre>
-<p>This prompts the user to type a file path. The <code>&#39;s&#39;</code> argument tells MATLAB to read the input as a <strong>string</strong> (text), not as a number.</p>
-<h3>If the user presses Enter (empty input) — Test Signal Generation (Lines 17–25):</h3>
-<pre><code class="language-matlab">fs_orig = 44100; dur = 3;
-tt = (0:round(fs_orig*dur)-1)&#39;/fs_orig;
-x_orig = 0.3*sin(2*pi*120*tt) + 0.5*sin(2*pi*400*tt) + ...
-    0.6*sin(2*pi*1200*tt) + 0.4*sin(2*pi*3000*tt) + ...
-    0.2*sin(2*pi*7000*tt) + 0.1*sin(2*pi*14000*tt) + ...
-    0.05*randn(size(tt));
-x_orig = x_orig / max(abs(x_orig));
-</code></pre>
-<p>This creates a <strong>synthetic test signal</strong> — a mix of pure sine waves at specific frequencies plus a small amount of random noise:</p>
-<ul>
-<li><code>fs_orig = 44100</code> — Sets sampling rate to CD quality.</li>
-<li><code>dur = 3</code> — 3 seconds of audio.</li>
-<li><code>tt = (0:round(fs_orig*dur)-1)&#39;/fs_orig</code> — Creates a <strong>time vector</strong>. This is an array of evenly spaced time values from 0 to ~3 seconds, with spacing <code>1/44100</code>. The <code>&#39;</code> transposes it into a column vector.</li>
-<li>The sine waves are at 120 Hz (in band 2), 400 Hz (band 3), 1200 Hz (band 4), 3000 Hz (band 5), 7000 Hz (band 6), and 14000 Hz (band 7). Each has a different amplitude (0.3, 0.5, 0.6, 0.4, 0.2, 0.1). This lets you see each band&#39;s filter working.</li>
-<li><code>0.05*randn(size(tt))</code> — Adds small Gaussian random noise to simulate real-world conditions.</li>
-<li><code>x_orig = x_orig / max(abs(x_orig))</code> — <strong>Normalization</strong>: divides the entire signal by its largest absolute value, so the signal fits within the range [-1, +1]. This prevents clipping (distortion from exceeding the maximum value).</li>
-</ul>
-<h3>If the user provides a filename (Lines 27–29):</h3>
-<pre><code class="language-matlab">[x_orig, fs_orig] = audioread(fname);
-if size(x_orig,2) &gt; 1, x_orig = mean(x_orig,2); end
-</code></pre>
-<ul>
-<li><code>audioread(fname)</code> — Reads a .wav or .mp3 file. Returns two things: <code>x_orig</code> (the audio data as a matrix of numbers, values between -1 and +1) and <code>fs_orig</code> (the file&#39;s sampling rate, e.g., 44100).</li>
-<li><code>if size(x_orig,2) &gt; 1</code> — Checks if the audio is <strong>stereo</strong> (2 columns: left and right channels). If so, <code>mean(x_orig,2)</code> averages the two channels into one <strong>mono</strong> signal. We do this because our equalizer processes one channel at a time.</li>
-</ul>
-<hr>
-<h2>2.3 Mode Selection &amp; Band Definition (Lines 32–49)</h2>
-<pre><code class="language-matlab">mode = input(&#39;Mode (1=Preset, 2=Custom) [1]: &#39;);
-if isempty(mode), mode = 1; end
-</code></pre>
-<p>The user picks Preset (7 fixed bands) or Custom (choose your own bands).</p>
-<h3>Preset Mode (Lines 36–38):</h3>
-<pre><code class="language-matlab">bands = [0 100; 100 300; 300 800; 800 2000; 2000 5000; 5000 10000; 10000 20000];
-bnames = {&#39;0-100&#39;,&#39;100-300&#39;,&#39;300-800&#39;,&#39;800-2k&#39;,&#39;2k-5k&#39;,&#39;5k-10k&#39;,&#39;10k-20k&#39;};
-</code></pre>
-<ul>
-<li><code>bands</code> is a <strong>7×2 matrix</strong>. Each row defines one frequency band: <code>[low_edge, high_edge]</code> in Hz.</li>
-<li><code>bnames</code> is a cell array of human-readable labels for each band, used in plots.</li>
-</ul>
-<h3>Custom Mode (Lines 40–48):</h3>
-<pre><code class="language-matlab">nb = input(&#39;Number of bands (5-10): &#39;);
-nb = max(5, min(10, nb));
-edges = input(sprintf(&#39;Enter %d edges [0 ... 20000]: &#39;, nb+1));
-bands = [edges(1:end-1)&#39;, edges(2:end)&#39;];
-</code></pre>
-<ul>
-<li>The user specifies how many bands (clamped between 5 and 10).</li>
-<li>Then enters the <strong>edge frequencies</strong>. For example, 6 bands need 7 edges: <code>[0 200 500 1000 3000 8000 20000]</code>.</li>
-<li><code>bands = [edges(1:end-1)&#39;, edges(2:end)&#39;]</code> — Turns the edge list into a matrix of <code>[low, high]</code> pairs. Edge 1-2 becomes band 1, edge 2-3 becomes band 2, etc.</li>
-</ul>
-<hr>
-<h2>2.4 Filter Type &amp; Parameters (Lines 51–70)</h2>
-<pre><code class="language-matlab">ftype = input(&#39;Filter (1=FIR, 2=IIR) [1]: &#39;);
-</code></pre>
-<h3>FIR Path (Lines 55–60):</h3>
-<pre><code class="language-matlab">wtype = input(&#39;Window (1=Hamming, 2=Hanning, 3=Blackman) [1]: &#39;);
-def_ord = 100;
-</code></pre>
-<ul>
-<li>The user selects the window function. Default order is 100 (meaning 101 coefficients).</li>
-</ul>
-<h3>IIR Path (Lines 62–66):</h3>
-<pre><code class="language-matlab">iir_m = input(&#39;IIR (1=Butterworth, 2=ChebyI, 3=ChebyII) [1]: &#39;);
-def_ord = 4;
-</code></pre>
-<ul>
-<li>The user selects the IIR design method. Default order is 4 (just 5 <code>b</code> and 5 <code>a</code> coefficients — vastly fewer than FIR).</li>
-</ul>
-<h3>Gain Input (Lines 72–75):</h3>
-<pre><code class="language-matlab">fprintf(&#39;Enter %d gains in dB (e.g. [0 3 6 3 0 -3 -6]):\n&#39;, nbands);
-gains_db = input(&#39;Gains: &#39;);
-if isempty(gains_db), gains_db = zeros(1,nbands); end
-</code></pre>
-<p>The user enters an array of gains in dB, one per band. If they press Enter, all gains default to 0 dB (no change).</p>
-<h3>Output Sample Rate (Lines 77–79):</h3>
-<pre><code class="language-matlab">fs_out = input(sprintf(&#39;Output sample rate [%d]: &#39;, fs_orig));
-if isempty(fs_out), fs_out = fs_orig; end
-</code></pre>
-<p>The user can choose a different output sample rate. Default is the same as the input.</p>
-<hr>
-<h2>2.5 Filter Design Loop (Lines 81–113) — THE CORE</h2>
-<p>This is where the math happens. We design one filter for each frequency band.</p>
-<pre><code class="language-matlab">nyq = fs_orig / 2;
-b_all = cell(1,nbands);
-a_all = cell(1,nbands);
-</code></pre>
-<ul>
-<li><code>nyq = fs_orig / 2</code> — The Nyquist frequency. For 44100 Hz, this is 22050 Hz.</li>
-<li><code>b_all</code> and <code>a_all</code> — Cell arrays to store each band&#39;s filter coefficients.</li>
-</ul>
-<h3>The Loop (Lines 86–113):</h3>
-<pre><code class="language-matlab">for i = 1:nbands
-    fl = bands(i,1); fh = min(bands(i,2), nyq-1);
-    if fl &gt;= nyq, b_all{i}=0; a_all{i}=1; continue; end
-</code></pre>
-<ul>
-<li><code>fl</code> = low edge of band <code>i</code>, <code>fh</code> = high edge (capped at <code>nyq-1</code> to stay below Nyquist).</li>
-<li>If the low edge is already above Nyquist, the band is impossible — skip it.</li>
-</ul>
-<h3>Determining Filter Type (Lines 90–96):</h3>
-<pre><code class="language-matlab">    if fl == 0
-        Wn = fh/nyq; ft = &#39;low&#39;;
-    elseif fh &gt;= nyq-1
-        Wn = max(fl/nyq, 0.001); ft = &#39;high&#39;;
-    else
-        Wn = [max(fl/nyq,0.001) fh/nyq]; ft = &#39;bandpass&#39;;
-    end
-</code></pre>
-<p>This converts Hz to <strong>normalized frequency</strong> and decides the filter type:</p>
-<ul>
-<li><strong>Band starts at 0 Hz</strong> → Use a <strong>lowpass</strong> filter. <code>Wn</code> is a single number (the upper cutoff as a fraction of Nyquist).</li>
-<li><strong>Band ends at/near Nyquist</strong> → Use a <strong>highpass</strong> filter. <code>Wn</code> is the lower cutoff.</li>
-<li><strong>Band is in the middle</strong> → Use a <strong>bandpass</strong> filter. <code>Wn</code> is a two-element vector <code>[low, high]</code>.</li>
-</ul>
-<p>The <code>max(fl/nyq, 0.001)</code> ensures the normalized frequency is never zero (which would be invalid).</p>
-<h3>FIR Design (Lines 98–105):</h3>
-<pre><code class="language-matlab">        switch wtype
-            case 1, w = hamming(filt_order+1);
-            case 2, w = hanning(filt_order+1);
-            case 3, w = blackman(filt_order+1);
-        end
-        b_all{i} = fir1(filt_order, Wn, ft, w);
+    <h1>Speech Equalizer: Part 2 - Code Walkthrough</h1>
+
+    <div class="callout">
+        <strong>Interactive Code Guide</strong><br>
+        Now that you understand the foundational concepts, let's walk through every line of the MATLAB code and explain exactly what it does to the audio data. Hover over <span class="concept-link">highlighted terms<span class="tooltip-content"><span class="tooltip-title">DSP Theory Link</span>We will connect specific code lines directly back to the DSP theories discussed in Part 1!</span></span> to refresh your memory.
+    </div>
+
+    <h2>2.1 Initialization & Audio Input</h2>
+<pre>
+<span class="c-func">fname</span> = <span class="c-func">input</span>(<span class="c-str">'Audio file path: '</span>,<span class="c-str">'s'</span>);
+[x_orig, fs_orig] = <span class="c-func">audioread</span>(fname);
+<span class="c-kw">if</span> <span class="c-func">size</span>(x_orig,2) > 1, x_orig = <span class="c-func">mean</span>(x_orig,2); <span class="c-kw">end</span>
+</pre>
+    <ul>
+        <li><code>audioread(fname)</code> reads a .wav file. It returns <code>x_orig</code> (the audio data matrix, values -1 to 1) and <code>fs_orig</code> (the <span class="concept-link">sampling rate<span class="tooltip-content"><span class="tooltip-title">Sampling Rate (fs)</span>How many times per second the microphone measured the air pressure. Usually 44,100 Hz for CD quality audio.</span></span>).</li>
+        <li><code>if size > 1</code> checks if the audio is stereo (2 channels). If so, <code>mean(x_orig, 2)</code> averages the left and right channels into a single mono signal for processing.</li>
+    </ul>
+
+    <h2>2.2 Filter Design Loop (The Core)</h2>
+    <p>This is where the math happens. We design one filter for each frequency band.</p>
+
+<pre>
+<span class="c-func">nyq</span> = fs_orig / 2;
+b_all = <span class="c-func">cell</span>(1,nbands);
+a_all = <span class="c-func">cell</span>(1,nbands);
+
+<span class="c-kw">for</span> i = 1:nbands
+    <span class="c-func">fl</span> = bands(i,1); <span class="c-func">fh</span> = <span class="c-func">min</span>(bands(i,2), nyq-1);
+    
+    <span class="c-comment">% Convert to normalized frequency</span>
+    Wn = [<span class="c-func">max</span>(fl/nyq,0.001) fh/nyq]; ft = <span class="c-str">'bandpass'</span>;
+    
+    <span class="c-kw">if</span> ftype == 1 <span class="c-comment">% FIR</span>
+        w = <span class="c-func">hamming</span>(filt_order+1);
+        b_all{i} = <span class="c-func">fir1</span>(filt_order, Wn, ft, w);
         a_all{i} = 1;
-</code></pre>
-<ul>
-<li><code>hamming(filt_order+1)</code> / <code>hanning(...)</code> / <code>blackman(...)</code> — Creates a window vector of length <code>filt_order+1</code>. This is the tapering function described in Part 1.</li>
-<li><code>fir1(filt_order, Wn, ft, w)</code> — This is MATLAB&#39;s <strong>FIR filter design function</strong>. It:<ol>
-<li>Computes the ideal filter&#39;s impulse response (a sinc function) for the given <code>Wn</code> and type <code>ft</code>.</li>
-<li>Truncates it to <code>filt_order+1</code> samples.</li>
-<li>Multiplies by the window <code>w</code> to smooth the truncation.</li>
-<li>Returns the <code>b</code> coefficients (an array of <code>filt_order+1</code> numbers).</li>
-</ol>
-</li>
-<li><code>a_all{i} = 1</code> — FIR filters have no denominator/feedback, so <code>a</code> is just 1.</li>
-</ul>
-<h3>IIR Design (Lines 107–111):</h3>
-<pre><code class="language-matlab">        switch iir_m
-            case 1, [b_all{i},a_all{i}] = butter(filt_order, Wn, ft);
-            case 2, [b_all{i},a_all{i}] = cheby1(filt_order, 0.5, Wn, ft);
-            case 3, [b_all{i},a_all{i}] = cheby2(filt_order, 40, Wn, ft);
-        end
-</code></pre>
-<ul>
-<li><code>butter(order, Wn, type)</code> — Designs a Butterworth IIR filter. Returns both <code>b</code> (numerator) and <code>a</code> (denominator) coefficient arrays.</li>
-<li><code>cheby1(order, Rp, Wn, type)</code> — Chebyshev Type I. <code>Rp = 0.5</code> means 0.5 dB passband ripple.</li>
-<li><code>cheby2(order, Rs, Wn, type)</code> — Chebyshev Type II. <code>Rs = 40</code> means 40 dB minimum stopband attenuation.</li>
-</ul>
-<hr>
-<h2>2.6 Signal Processing — Filtering &amp; Gain (Lines 115–131)</h2>
-<pre><code class="language-matlab">x = x_orig;
-y_bands = zeros(length(x), nbands);
-</code></pre>
-<ul>
-<li><code>y_bands</code> — A matrix where each column will hold the filtered+gained signal for one band.</li>
-</ul>
-<h3>The Filtering Loop (Lines 119–128):</h3>
-<pre><code class="language-matlab">for i = 1:nbands
-    if isequal(b_all{i}, 0), continue; end
-    if ftype == 1
-        yi = filter(b_all{i}, a_all{i}, x);
-    else
-        yi = filtfilt(b_all{i}, a_all{i}, x);
-    end
+    <span class="c-kw">else</span> <span class="c-comment">% IIR</span>
+        [b_all{i},a_all{i}] = <span class="c-func">butter</span>(filt_order, Wn, ft);
+    <span class="c-kw">end</span>
+<span class="c-kw">end</span>
+</pre>
+    <ul>
+        <li><code>nyq = fs_orig / 2</code> calculates the <span class="concept-link">Nyquist Frequency<span class="tooltip-content"><span class="tooltip-title">Nyquist Frequency</span>The absolute maximum frequency your digital signal can contain. All MATLAB filters require you to define your cutoffs as a fraction (0 to 1.0) of this Nyquist value.</span></span>.</li>
+        <li><code>Wn = [fl/nyq fh/nyq]</code> converts the user's raw Hz edges (e.g., 100 to 300 Hz) into a normalized fraction required by MATLAB's filter design algorithms.</li>
+        <li><strong>FIR Path</strong>: Uses <code>fir1</code> along with a <span class="concept-link">Hamming window<span class="tooltip-content"><span class="tooltip-title">Hamming Window</span>A math function that tapers the edges of the filter coefficients to zero. This prevents the "Gibbs Phenomenon," which would otherwise cause the frequency response to ripple and ring wildly.</span></span> to create a highly precise, linear-phase bandpass filter. <code>a_all{i} = 1</code> because FIR filters have no feedback loop.</li>
+        <li><strong>IIR Path</strong>: Uses <code>butter</code> (Butterworth) to generate both feedforward (<code>b</code>) and feedback (<code>a</code>) coefficients.</li>
+    </ul>
+
+    <h2>2.3 Signal Processing — Filtering & Gain</h2>
+<pre>
+<span class="c-func">y_bands</span> = <span class="c-func">zeros</span>(<span class="c-func">length</span>(x), nbands);
+
+<span class="c-kw">for</span> i = 1:nbands
+    <span class="c-kw">if</span> ftype == 1
+        yi = <span class="c-func">filter</span>(b_all{i}, a_all{i}, x);
+    <span class="c-kw">else</span>
+        yi = <span class="c-func">filtfilt</span>(b_all{i}, a_all{i}, x);
+    <span class="c-kw">end</span>
+    
+    <span class="c-comment">% Apply Volume Gain</span>
     gain_lin = 10^(gains_db(i)/20);
     y_bands(:,i) = yi * gain_lin;
-end
-</code></pre>
-<ul>
-<li><code>filter(b, a, x)</code> — Applies the difference equation <code>y[n] = b₀x[n] + b₁x[n-1] + ... - a₁y[n-1] - ...</code> sample-by-sample through the entire signal <code>x</code>. Used for FIR because FIR has linear phase and no need for <code>filtfilt</code>.</li>
-<li><code>filtfilt(b, a, x)</code> — Applies the filter <strong>forward</strong>, then <strong>backward</strong>, canceling phase distortion. Used for IIR to achieve zero-phase filtering.</li>
-<li><code>gain_lin = 10^(gains_db(i)/20)</code> — Converts the user&#39;s dB gain to a linear multiplier (e.g., +6 dB → 2.0).</li>
-<li><code>y_bands(:,i) = yi * gain_lin</code> — Every sample in this band&#39;s filtered signal is multiplied by the gain.</li>
-</ul>
-<h3>Recombination (Lines 130–131):</h3>
-<pre><code class="language-matlab">y_eq = sum(y_bands, 2);
-y_eq = y_eq / max(abs(y_eq)+eps);
-</code></pre>
-<ul>
-<li><code>sum(y_bands, 2)</code> — Sums across all columns (bands) for each row (time sample). This adds all the gained band signals back together into one complete audio signal.</li>
-<li><code>y_eq / max(abs(y_eq)+eps)</code> — Normalizes the output to [-1, +1] to prevent clipping. The <code>+eps</code> prevents division by zero (<code>eps</code> is ~2.2×10⁻¹⁶).</li>
-</ul>
-<p><strong>This is how the equalizer works</strong>: split → gain → sum. The bands are designed to cover the entire spectrum, so summing them reconstructs the full signal. The only change is that each band has been amplified or attenuated according to the user&#39;s dB settings.</p>
-<hr>
-<h2>2.7 Alternate Filter Type Comparison (Lines 140–167)</h2>
-<pre><code class="language-matlab">if ftype == 1
-    alt_name = &#39;IIR Butterworth&#39;;
-else
-    alt_name = &#39;FIR Hamming&#39;;
-end
-</code></pre>
-<p>This section runs the <strong>opposite</strong> filter type with the same bands and gains, so you can visually compare FIR vs IIR results in the plots. If you chose FIR, it runs a Butterworth IIR as the alternate. If you chose IIR, it runs an FIR Hamming as the alternate.</p>
-<p>The logic is identical to the main processing loop — design filters, apply them, multiply by gain, sum. The result is stored in <code>y_alt</code>.</p>
-<hr>
-<h2>2.8 Sample Rate Demonstrations (Lines 169–173)</h2>
-<pre><code class="language-matlab">y_4x = resample(y_eq, 4, 1);
-y_half = resample(y_eq, 1, 2);
-fs_4x = fs_orig * 4;
-fs_half = fs_orig / 2;
-</code></pre>
-<ul>
-<li><code>resample(y_eq, 4, 1)</code> — <strong>Upsamples by 4×</strong>. The arguments are <code>resample(signal, P, Q)</code> which changes the rate by the factor P/Q. So <code>P=4, Q=1</code> means multiply the sample rate by 4/1 = 4. Internally, MATLAB inserts zeros, applies an anti-imaging lowpass filter, and interpolates.</li>
-<li><code>resample(y_eq, 1, 2)</code> — <strong>Downsamples by 2×</strong> (factor 1/2). MATLAB first applies an anti-aliasing lowpass filter to remove frequencies above the new Nyquist, then keeps every 2nd sample.</li>
-<li><code>fs_4x = fs_orig * 4</code> — Records the new sample rate (e.g., 176,400 Hz).</li>
-<li><code>fs_half = fs_orig / 2</code> — Records the new sample rate (e.g., 22,050 Hz).</li>
-</ul>
-<hr>
-<h2>2.9 PSD Computation (Lines 175–178)</h2>
-<pre><code class="language-matlab">nw = min(1024, floor(length(x)/4));
-[pxx_orig, f_psd] = pwelch(x, hamming(nw), nw/2, nw, fs_orig);
-[pxx_eq, ~] = pwelch(y_eq, hamming(nw), nw/2, nw, fs_orig);
-</code></pre>
-<ul>
-<li><code>pwelch</code> implements the <strong>Welch method</strong> for Power Spectral Density estimation:<ul>
-<li><code>x</code> — the signal to analyze.</li>
-<li><code>hamming(nw)</code> — window of length <code>nw</code> samples.</li>
-<li><code>nw/2</code> — overlap of 50% between segments.</li>
-<li><code>nw</code> — FFT length.</li>
-<li><code>fs_orig</code> — sampling rate (so frequencies are in Hz, not normalized).</li>
-</ul>
-</li>
-<li>Returns <code>pxx</code> (power at each frequency) and <code>f_psd</code> (the frequency axis).</li>
-<li>We compute PSD for both original and equalized signals to compare them.</li>
-</ul>
-<hr>
-<h2>2.10 Visualization Tabs (Lines 180–330)</h2>
-<p>The code creates a <strong>tabbed figure window</strong> with multiple analysis tabs. Here&#39;s a summary of each:</p>
-<h3>Tab: &quot;All Magnitudes&quot; (Lines 187–199)</h3>
-<p>For each band, computes <code>freqz(b, a, Nfft, fs)</code> — the frequency response — and plots <code>20*log10(abs(H))</code>, which is the magnitude response in dB.</p>
-<h3>Tab: &quot;All Phases&quot; (Lines 201–213)</h3>
-<p>Plots <code>unwrap(angle(H))*180/pi</code> — the phase response in degrees. <code>unwrap</code> corrects for the discontinuities that happen when the angle wraps from +180° to -180°.</p>
-<h3>Tab: Per-Band Analysis (Lines 215–263)</h3>
-<p>For each of the 7 bands, creates 6 sub-plots:</p>
-<ol>
-<li><strong>Magnitude Response</strong> — Same as above but for one band only.</li>
-<li><strong>Phase Response</strong> — Same as above.</li>
-<li><strong>Impulse Response</strong> — Filters a single spike <code>[1; 0; 0; ...]</code> through the filter. Shows the filter&#39;s <code>b</code> coefficients essentially.</li>
-<li><strong>Step Response</strong> — Filters a constant-1 signal through the filter. Shows how the filter responds to a sudden &quot;step&quot; change.</li>
-<li><strong>Pole-Zero Diagram</strong> — <code>zplane(b, a)</code> plots the filter&#39;s poles (×) and zeros (○) on the complex unit circle. Poles inside the unit circle = stable filter.</li>
-<li><strong>Info Panel</strong> — Displays band name, filter type, order, gain, and coefficient counts.</li>
-</ol>
-<h3>Tab: &quot;Time Compare&quot; (Lines 265–273)</h3>
-<p>Plots the original and equalized waveforms side by side in the time domain.</p>
-<h3>Tab: &quot;Freq Compare&quot; (Lines 275–286)</h3>
-<p>Computes the FFT of both signals, converts to dB, and overlays them. Shows exactly which frequencies were boosted or cut.</p>
-<h3>Tab: &quot;PSD&quot; (Lines 288–295)</h3>
-<p>Plots the Welch PSD for original vs equalized. This is a smoother version of the frequency comparison.</p>
-<h3>Tab: &quot;Spectrogram&quot; (Lines 297–305)</h3>
-<p>Uses <code>spectrogram(x, window, overlap, nfft, fs, &#39;yaxis&#39;)</code> to create time-frequency plots. Shows how the frequency content of the signal changes over time.</p>
-<h3>Tab: &quot;FIR vs IIR&quot; (Lines 307–314)</h3>
-<p>Overlays the primary and alternate filter type results in the time domain.</p>
-<h3>Tab: &quot;Sample Rate&quot; (Lines 316–330)</h3>
-<p>Shows three versions of the equalized signal: original rate, 4× rate, and half rate. Zoomed in to the first ~500 samples to show the difference in sample density.</p>
-<hr>
-<h2>2.11 Saving Outputs (Lines 332–366)</h2>
-<pre><code class="language-matlab">exportgraphics(tabs_all(i), fullfile(figDir, fname_fig), &#39;Resolution&#39;, 150);
-</code></pre>
-<p>Saves each tab as a PNG image at 150 DPI resolution into the <code>figures</code> folder.</p>
-<pre><code class="language-matlab">audiowrite(out_file, y_out, fs_out);
-</code></pre>
-<ul>
-<li><code>audiowrite(filename, data, sampleRate)</code> — Writes the audio array to a <code>.wav</code> file. The data must be in [-1, +1] range. The sample rate tells the WAV header how fast to play back.</li>
-</ul>
-<p>The code saves four audio files:</p>
-<ol>
-<li><code>output_equalized.wav</code> — The main equalized output (at the chosen output sample rate).</li>
-<li><code>output_alternate.wav</code> — The alternate filter type result.</li>
-<li><code>output_4x.wav</code> — The 4× upsampled version.</li>
-<li><code>output_half.wav</code> — The half-rate downsampled version.</li>
-</ol>
-<p>Finally, <code>sound(x, fs_orig)</code> plays the audio through your speakers.</p>
-<hr>
-<h2>2.12 The Helper Function <code>tsubplot</code> (Lines 368–380)</h2>
-<pre><code class="language-matlab">function ax = tsubplot(parent, m, n, p)
-</code></pre>
-<p>This is a custom function that creates positioned axes within a tab. MATLAB&#39;s built-in <code>subplot</code> doesn&#39;t work cleanly inside <code>uitab</code> panels, so this helper manually calculates the position of each sub-plot using row/column arithmetic and creates the axes with explicit <code>[left bottom width height]</code> coordinates.</p>
+<span class="c-kw">end</span>
+
+<span class="c-comment">% Recombine the signal</span>
+y_eq = <span class="c-func">sum</span>(y_bands, 2);
+y_eq = y_eq / <span class="c-func">max</span>(<span class="c-func">abs</span>(y_eq)+eps);
+</pre>
+    <ul>
+        <li><code>filter()</code> processes the audio normally. Used for FIR because FIR naturally preserves the waveform shape.</li>
+        <li><code>filtfilt()</code> is the <span class="concept-link">Zero-Phase trick<span class="tooltip-content"><span class="tooltip-title">Zero-Phase Filtering</span>IIR filters naturally distort the phase (time-alignment) of speech. `filtfilt` runs the audio forward through the filter, then reverses it and runs it backward. The two distortions perfectly cancel each other out!</span></span> used for IIR to prevent it from smearing the speech transients.</li>
+        <li><code>10^(gains_db(i)/20)</code> converts the <span class="concept-link">decibel gain<span class="tooltip-content"><span class="tooltip-title">Decibels (dB)</span>A logarithmic scale for loudness. +6 dB means the linear multiplier is roughly 2.0 (twice the amplitude). -6 dB means the linear multiplier is roughly 0.5 (half amplitude).</span></span> the user typed into a standard linear multiplier.</li>
+        <li><code>sum(y_bands, 2)</code>: After every band has been isolated and gained, we mathematically add them all back together. Because our bands cover the whole spectrum (0 to 20kHz) without gaps, adding them up perfectly reconstructs the original audio—just with the user's EQ boosts applied!</li>
+    </ul>
+
+    <h2>2.4 Sample Rate Conversion</h2>
+<pre>
+y_4x = <span class="c-func">resample</span>(y_eq, 4, 1);
+y_half = <span class="c-func">resample</span>(y_eq, 1, 2);
+</pre>
+    <ul>
+        <li><code>resample(signal, 4, 1)</code> performs <span class="concept-link">upsampling<span class="tooltip-content"><span class="tooltip-title">Upsampling</span>Increases the sample rate by 4x. MATLAB automatically inserts zeros and applies a low-pass anti-imaging filter to smoothly interpolate the missing data points.</span></span>.</li>
+        <li><code>resample(signal, 1, 2)</code> performs <span class="concept-link">downsampling<span class="tooltip-content"><span class="tooltip-title">Downsampling</span>Cuts the sample rate in half. MATLAB automatically applies an anti-aliasing low-pass filter BEFORE discarding every other sample, preventing high-frequency noise from corrupting the lower frequencies.</span></span>.</li>
+    </ul>
+
+    <div class="nav-buttons">
+        <a href="Part1_DSP_Concepts.html" class="btn btn-secondary">← Back to Part 1: Concepts</a>
+        <a href="Part3_Figure_Analysis.html" class="btn">Next: Part 3 Figure Analysis →</a>
+    </div>
 
 </body>
 </html>

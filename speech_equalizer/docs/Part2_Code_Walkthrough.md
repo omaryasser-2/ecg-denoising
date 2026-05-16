@@ -1,6 +1,6 @@
-# Part 2: Line-by-Line Code Logic & Algorithm
+# Speech Equalizer: Part 2 - Code Walkthrough
 
-Now that you understand the foundational concepts, let's walk through every line of the MATLAB code and explain exactly what it does to the audio data.
+> **Learning Guide:** Now that you understand the foundational concepts, let's walk through every line of the MATLAB code and explain exactly what it does to the audio data.
 
 ---
 

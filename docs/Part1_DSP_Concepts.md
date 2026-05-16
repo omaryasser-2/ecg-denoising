@@ -1,33 +1,35 @@
-# Part 1: The Foundational DSP Concepts
+# ECG Denoising: Digital Signal Processing Concepts
 
-Before we touch the code, let's build up every concept you need from absolute zero.
+> **Learning Guide:** Before we touch the code, let's build up every concept you need from absolute zero. This document breaks down the foundational Digital Signal Processing (DSP) concepts required to understand ECG filtering. We assume no prior knowledge, defining core terminology as we go.
 
 ---
 
-## 1.1 What is an ECG Signal?
+## 1.1 The Foundation: What is an ECG Signal?
 
-An ECG (Electrocardiogram) is a recording of the electrical activity of the heart. Electrodes on your skin pick up tiny voltage changes (millivolts) as the heart muscles contract and relax.
+An **ECG (Electrocardiogram)** is a recording of the electrical activity of the heart. Electrodes on your skin pick up tiny voltage changes (millivolts) as the heart muscles contract and relax. To analyze this on a computer, the continuous physical signal must undergo **Sampling** and **Quantization**.
+
+*   **Sampling:** In the real world, signals like sound or heartbeats are continuous (Analog). Computers can only understand discrete numbers. Sampling is the process of taking "snapshots" or measuring the continuous signal at regular time intervals. 
+*   **Quantization:** After sampling, Quantization assigns a specific numerical value to the signal's amplitude at that moment. Our ECG uses an 11-bit resolution, meaning it can represent the voltage using 2,048 different discrete levels.
 
 A single heartbeat produces a characteristic waveform with labeled parts:
 - **P-wave**: the atria (upper chambers) contracting
 - **QRS complex**: the ventricles (lower chambers) contracting — this is the tall, sharp spike
 - **T-wave**: the ventricles relaxing
 
-The **QRS complex** is the most important feature for diagnosis. It's sharp, fast, and contains frequencies up to about 30–40 Hz. The P and T waves are slower (0.5–10 Hz).
+The **QRS complex** is the most important feature for diagnosis. It's sharp, fast, and contains **frequencies** up to about 30–40 Hz. 
+*   **Frequency (Hz):** Frequency measures how often something repeats over time, measured in Hertz (Hz). 1 Hz means 1 cycle per second. In our ECG, the heart beats roughly 1-2 times per second (1-2 Hz).
 
 **Our data** comes from the MIT-BIH Arrhythmia Database:
 - **Record 100**: Normal sinus rhythm (healthy heartbeat)
 - **Record 106**: Contains PVCs (Premature Ventricular Contractions) — abnormal early beats with a different shape
 
-The signals are sampled at **fs = 360 Hz**, meaning the equipment measures the voltage 360 times per second.
-
 ---
 
 ## 1.2 What is "Sampling Frequency" and "Nyquist"?
 
-**Sampling frequency (fs)**: How many measurements per second. Our ECG = 360 samples/second.
+**Sampling frequency (fs)**: How many measurements per second. Our ECG signals are sampled at **fs = 360 Hz**, meaning the equipment measures the voltage 360 times per second.
 
-**Nyquist frequency**: Exactly half of fs. For us: 360/2 = **180 Hz**. This is the highest frequency that our digital system can possibly represent. Any frequency above 180 Hz simply cannot exist in our data.
+**Nyquist frequency**: Exactly half of fs. For us: 360/2 = **180 Hz**. This is the highest frequency that our digital system can possibly represent. Any frequency above 180 Hz simply cannot exist in our digital data.
 
 **Why this matters**: When we design filters in MATLAB, all frequencies must be expressed as a fraction of the Nyquist frequency. This is called **normalized frequency**. For example:
 - 0.5 Hz becomes `0.5 / 180 = 0.00278`
@@ -40,7 +42,7 @@ This is why you see `0.5/(fs/2)` everywhere in the code — it's converting real
 
 ## 1.3 The Three Noises Contaminating ECG
 
-When electrodes record the heart, they also pick up three types of unwanted interference:
+When electrodes record the heart, they also pick up three types of unwanted interference. We call this unwanted data **Noise**.
 
 ### Noise 1: Baseline Wander (< 0.5 Hz)
 - **Source**: The patient breathes, and the chest moves. The electrodes shift slightly.
@@ -49,7 +51,7 @@ When electrodes record the heart, they also pick up three types of unwanted inte
 - **Why it's bad**: It makes the trace "wander" vertically. A doctor might mistake the drift for an ST-segment elevation (which indicates a heart attack).
 
 ### Noise 2: Power-line Interference (50 Hz)
-- **Source**: The electrical wiring in the walls radiates electromagnetic fields at 50 Hz (the mains frequency in your country). The ECG cables act like antennas.
+- **Source**: The electrical wiring in the walls radiates electromagnetic fields at 50 Hz (the mains frequency in many countries). The ECG cables act like antennas.
 - **What it looks like**: A fast sinusoidal ripple sitting on top of the ECG.
 - **Frequency**: Exactly 50 Hz.
 - **Why it's bad**: It adds a visible buzz to the trace, masking the smaller P-wave and T-wave.
@@ -57,8 +59,11 @@ When electrodes record the heart, they also pick up three types of unwanted inte
 ### Noise 3: EMG / Muscle Noise (20–150 Hz)
 - **Source**: Skeletal muscles near the electrodes (arms, chest) fire random electrical signals.
 - **What it looks like**: High-frequency fuzz/static that makes the trace look "hairy."
-- **Frequency**: Spread across 20–150 Hz, but we only care about removing the part **above 100 Hz** because ECG content goes up to ~100 Hz.
+- **Frequency**: Spread across 20–150 Hz, but we only care about removing the part **above 100 Hz** because vital ECG content goes up to ~100 Hz.
 - **Why it's bad**: It buries the fine details of the QRS complex.
+
+![Raw ECG showing noise](../figures/fig01_raw_ecg.png)
+*Figure 1: The Raw ECG signal before any denoising. You can see the slow baseline wander (drifting) and the high-frequency fuzziness (EMG/Powerline noise).*
 
 ### Our Strategy: Three Filters in a Row
 
@@ -72,9 +77,7 @@ Raw ECG → [High-Pass at 0.5 Hz] → [Notch at 50 Hz] → [Low-Pass at 100 Hz] 
 
 ## 1.4 What is a Digital Filter?
 
-A digital filter is a mathematical operation that takes your signal (a list of numbers) and produces a new list of numbers where certain frequencies have been amplified or suppressed.
-
-Think of it like an audio equalizer on your phone — you can boost bass (low frequencies) or cut treble (high frequencies). Except here we're doing it with math on the raw data.
+A digital filter is a mathematical operation that takes your signal (a list of numbers) and produces a new list of numbers where certain frequencies have been amplified or suppressed. Think of it like a coffee filter: it lets the good stuff (the diagnostic heart signal) through while blocking the bad stuff (the noise).
 
 Every digital filter is defined by a **difference equation**:
 
@@ -94,6 +97,8 @@ This is where the two main filter families come from.
 
 ## 1.5 FIR vs IIR Filters
 
+There are two main families of digital filters. We implemented both to compare their performance.
+
 ### FIR = Finite Impulse Response
 
 An FIR filter **only has `b` coefficients**. The `a` side is just `a₀ = 1` (no feedback). The equation becomes:
@@ -107,8 +112,8 @@ y[n] = b₀·x[n] + b₁·x[n-1] + b₂·x[n-2] + ... + bₙ·x[n-N]
 
 **Key properties**:
 - ✅ **Always stable**: Since there's no feedback, it can never oscillate or blow up.
-- ✅ **Linear phase** (with symmetric coefficients): All frequency components are delayed by the same amount. The waveform shape is perfectly preserved — just shifted in time.
-- ❌ **Needs many taps**: To get a sharp cutoff at low frequencies (like 0.5 Hz when fs=360), you need hundreds of coefficients (our code uses 500).
+- ✅ **Linear phase**: When a filter processes a signal, it delays it slightly. If all frequencies are delayed by the exact same amount of time, the filter has "Linear phase". The waveform shape is perfectly preserved — just shifted in time.
+- ❌ **Needs many taps (High Filter Order)**: To get a sharp cutoff at low frequencies (like 0.5 Hz when fs=360), you need hundreds of coefficients (our code uses 500).
 
 ### IIR = Infinite Impulse Response
 
@@ -124,7 +129,7 @@ y[n] = b₀·x[n] + b₁·x[n-1] ... - a₁·y[n-1] - a₂·y[n-2] ...
 **Key properties**:
 - ✅ **Very efficient**: A 4th-order IIR can match the sharpness of a 500-tap FIR.
 - ❌ **Can be unstable**: If the feedback coefficients are wrong, the output can grow without bound.
-- ❌ **Non-linear phase**: Different frequencies get delayed by different amounts, which distorts the waveform shape. (We fix this with `filtfilt` — explained below.)
+- ❌ **Non-linear phase**: Different frequencies get delayed by different amounts, which distorts the waveform shape. (We fix this with `filtfilt` — explained below).
 
 ---
 
@@ -136,7 +141,7 @@ y[n] = b₀·x[n] + b₁·x[n-1] ... - a₁·y[n-1] - a₂·y[n-2] ...
 - **In our code**: `butter(4, ...)` — 4th order.
 
 ### Chebyshev Type II
-- **Philosophy**: Allow controlled ripple in the **stopband** (the region you're blocking) to get a **sharper transition** than Butterworth.
+- **Philosophy**: Allow controlled **ripple** in the **stopband** (the region you're blocking) to get a **sharper transition** than Butterworth. Ripples are small fluctuations or bouncing in the frequency response.
 - **Passband**: Completely flat (monotonic) — no ripple where your signal lives.
 - **Stopband**: Has an equiripple pattern, but the ripples never exceed a guaranteed minimum attenuation (we set Rs=40 dB, meaning the noise is at least 10,000× weaker in power).
 - **Why Type II and not Type I?** Type I has ripple in the passband, which would distort our ECG. Type II puts the ripple in the stopband where we don't care.
@@ -146,6 +151,9 @@ y[n] = b₀·x[n] + b₁·x[n-1] ... - a₁·y[n-1] - a₂·y[n-2] ...
 - A specialized 2nd-order IIR filter that creates a very narrow "notch" (dip) at exactly one frequency.
 - **Q-factor = 30**: Controls the width. Higher Q = narrower notch. Q=30 means only about 50 ± 0.83 Hz is removed. Everything else passes unchanged.
 - Used for both Butterworth and Chebyshev sets because it's already the most efficient design for a single-frequency notch.
+
+![Spectrogram](../figures/fig14_spectrogram.png)
+*Figure 2: The Spectrogram shows Frequency on the Y-axis and Time on the X-axis. Bright colors indicate high energy. Notice the bright horizontal line at 50 Hz in the 'Raw' plot (Powerline noise). In the filtered plots (Butterworth, FIR, Chebyshev), that 50 Hz line is completely erased by our Notch filter.*
 
 ---
 
