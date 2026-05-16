@@ -35,6 +35,33 @@ body {
     min-height: 100vh;
 }
 
+/* ===== TOP NAVIGATION BAR ===== */
+.top-nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 24px;
+    background: rgba(10, 10, 15, 0.85);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+}
+.top-nav-label {
+    font-size: 0.85rem; font-weight: 600; color: var(--text-dim);
+    display: flex; align-items: center; gap: 8px;
+}
+.top-nav-label i { color: var(--accent); }
+.top-nav-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: #fff; padding: 8px 20px; border-radius: 30px;
+    font-size: 0.82rem; font-weight: 600; text-decoration: none;
+    box-shadow: 0 2px 15px rgba(16, 185, 129, 0.3);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+.top-nav-btn:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 25px rgba(16, 185, 129, 0.45);
+}
+
 /* ===== ANIMATED BACKGROUND ===== */
 .bg-grid {
     position: fixed; inset: 0; z-index: 0; pointer-events: none;
