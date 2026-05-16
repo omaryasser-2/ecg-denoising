@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Band Speech Equalizer | DSP Project</title>
+    <meta name="description" content="Interactive showcase of a Multi-Band Speech Equalizer built with MATLAB — FIR & IIR filter-based DSP project.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Hero Section -->
+    <header class="hero" id="hero">
+        <div class="hero-badge">
+            <i class="fas fa-microchip"></i> DSP Project — MATLAB Implementation
+        </div>
+        <h1 class="hero-title">
+            <span class="hero-icon"><i class="fas fa-sliders-h"></i></span>
+            Multi-Band Speech <span class="gradient-text">Equalizer</span>
+        </h1>
+        <p class="hero-subtitle">
+            FIR &amp; IIR filter-based audio equalizer with 7-band preset and custom modes.
+            <br>Built with MATLAB's Signal Processing Toolbox.
+        </p>
+        <div class="hero-stats">
+            <div class="stat-card">
+                <div class="stat-value">7</div>
+                <div class="stat-label">Frequency Bands</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">15</div>
+                <div class="stat-label">Analysis Figures</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">2</div>
+                <div class="stat-label">Filter Types</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Window Functions</div>
+            </div>
+        </div>
+        <a href="#audio" class="hero-cta">
+            <i class="fas fa-headphones"></i> Listen to Results
+        </a>
+    </header>
+
+    <!-- Audio Player Section -->
+    <section class="section" id="audio">
+        <h2 class="section-title"><i class="fas fa-volume-up"></i> Audio Comparison</h2>
+        <p class="section-desc">Listen to the original and processed audio outputs side by side.</p>
+        <div class="audio-grid">
+            <div class="audio-card" id="audio-original">
+                <div class="audio-card-icon"><i class="fas fa-waveform-lines"></i></div>
+                <h3>Original Signal</h3>
+                <p>Unprocessed test speech input</p>
+                <audio controls preload="metadata">
+                    <source src="../test_speech.wav" type="audio/wav">
+                </audio>
+            </div>
+            <div class="audio-card featured" id="audio-equalized">
+                <div class="audio-card-icon"><i class="fas fa-sliders-h"></i></div>
+                <h3>Equalized Output</h3>
+                <p>Primary filter applied</p>
+                <audio controls preload="metadata">
+                    <source src="../output_equalized.wav" type="audio/wav">
+                </audio>
+                <span class="audio-badge">Main Output</span>
+            </div>
+            <div class="audio-card" id="audio-alternate">
+                <div class="audio-card-icon"><i class="fas fa-exchange-alt"></i></div>
+                <h3>Alternate Filter</h3>
+                <p>Opposite filter type comparison</p>
+                <audio controls preload="metadata">
+                    <source src="../output_alternate.wav" type="audio/wav">
+                </audio>
+            </div>
+            <div class="audio-card" id="audio-4x">
+                <div class="audio-card-icon"><i class="fas fa-forward"></i></div>
+                <h3>4× Sample Rate</h3>
+                <p>Upsampled to 4× original rate</p>
+                <audio controls preload="metadata">
+                    <source src="../output_4x.wav" type="audio/wav">
+                </audio>
+            </div>
+            <div class="audio-card" id="audio-half">
+                <div class="audio-card-icon"><i class="fas fa-backward"></i></div>
+                <h3>½ Sample Rate</h3>
+                <p>Downsampled to half rate</p>
+                <audio controls preload="metadata">
+                    <source src="../output_half.wav" type="audio/wav">
+                </audio>
+            </div>
+        </div>
+    </section>
+
+    <!-- Figures Gallery Section -->
+    <section class="section" id="figures">
+        <h2 class="section-title"><i class="fas fa-chart-line"></i> Analysis Results</h2>
+        <p class="section-desc">All 15 figures generated by the MATLAB script — click any tab to explore.</p>
+
+        <div class="tab-bar" id="tab-bar">
+            <button class="tab active" data-tab="0"><i class="fas fa-layer-group"></i> All Magnitudes</button>
+            <button class="tab" data-tab="1"><i class="fas fa-wave-square"></i> All Phases</button>
+            <button class="tab" data-tab="2"><i class="fas fa-filter"></i> 0-100 Hz</button>
+            <button class="tab" data-tab="3"><i class="fas fa-filter"></i> 100-300</button>
+            <button class="tab" data-tab="4"><i class="fas fa-filter"></i> 300-800</button>
+            <button class="tab" data-tab="5"><i class="fas fa-filter"></i> 800-2k</button>
+            <button class="tab" data-tab="6"><i class="fas fa-filter"></i> 2k-5k</button>
+            <button class="tab" data-tab="7"><i class="fas fa-filter"></i> 5k-10k</button>
+            <button class="tab" data-tab="8"><i class="fas fa-filter"></i> 10k-20k</button>
+            <button class="tab" data-tab="9"><i class="fas fa-clock"></i> Time Compare</button>
+            <button class="tab" data-tab="10"><i class="fas fa-chart-bar"></i> Freq Compare</button>
+            <button class="tab" data-tab="11"><i class="fas fa-signal"></i> PSD</button>
+            <button class="tab" data-tab="12"><i class="fas fa-braille"></i> Spectrogram</button>
+            <button class="tab" data-tab="13"><i class="fas fa-code-compare"></i> FIR vs IIR</button>
+            <button class="tab" data-tab="14"><i class="fas fa-gauge-high"></i> Sample Rate</button>
+        </div>
+
+        <div class="figure-viewer" id="figure-viewer">
+            <div class="figure-nav">
+                <button class="nav-btn" id="prev-fig"><i class="fas fa-chevron-left"></i></button>
+                <span class="figure-counter" id="fig-counter">1 / 15</span>
+                <button class="nav-btn" id="next-fig"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="figure-frame">
+                <img id="figure-img" src="../figures/fig01_all_magnitudes.png" alt="Analysis Figure" loading="lazy">
+            </div>
+            <div class="figure-caption" id="figure-caption">
+                Combined magnitude response of all 7 frequency bands (FIR Hamming filter)
+            </div>
+        </div>
+    </section>
+
+    <!-- System Architecture Section -->
+    <section class="section" id="architecture">
+        <h2 class="section-title"><i class="fas fa-diagram-project"></i> System Architecture</h2>
+        <p class="section-desc">Signal flow through the multi-band equalizer pipeline.</p>
+        <div class="flow-diagram">
+            <div class="flow-node input-node">
+                <i class="fas fa-microphone"></i>
+                <span>Audio Input</span>
+                <small>.wav / test signal</small>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-node">
+                <i class="fas fa-scissors"></i>
+                <span>Band Split</span>
+                <small>7 frequency bands</small>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-node filter-node">
+                <i class="fas fa-sliders-h"></i>
+                <span>Filter + Gain</span>
+                <small>FIR / IIR per band</small>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-node">
+                <i class="fas fa-code-merge"></i>
+                <span>Sum &amp; Normalize</span>
+                <small>Combine all bands</small>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-node output-node">
+                <i class="fas fa-headphones"></i>
+                <span>Output</span>
+                <small>Equalized .wav</small>
+            </div>
+        </div>
+        <div class="bands-table-wrap">
+            <table class="bands-table">
+                <thead>
+                    <tr>
+                        <th>Band</th><th>Range (Hz)</th><th>Type</th><th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>1</td><td>0 – 100</td><td>Lowpass</td><td>Sub-bass rumble</td></tr>
+                    <tr><td>2</td><td>100 – 300</td><td>Bandpass</td><td>Low-mid warmth</td></tr>
+                    <tr><td>3</td><td>300 – 800</td><td>Bandpass</td><td>Mid-range body</td></tr>
+                    <tr><td>4</td><td>800 – 2k</td><td>Bandpass</td><td>Upper-mid presence</td></tr>
+                    <tr><td>5</td><td>2k – 5k</td><td>Bandpass</td><td>Speech clarity</td></tr>
+                    <tr><td>6</td><td>5k – 10k</td><td>Bandpass</td><td>Brilliance / sibilance</td></tr>
+                    <tr><td>7</td><td>10k – 20k</td><td>Highpass</td><td>Air / sparkle</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- MATLAB Code Section -->
+    <section class="section" id="code">
+        <h2 class="section-title"><i class="fas fa-code"></i> MATLAB Source Code</h2>
+        <p class="section-desc">Full implementation — <code>speech_equalizer.m</code> (380 lines)</p>
+        <div class="code-toolbar">
+            <span class="code-filename"><i class="fas fa-file-code"></i> speech_equalizer.m</span>
+            <button class="copy-btn" id="copy-code"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+        <div class="code-block">
+            <pre><code id="matlab-code">Loading...</code></pre>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Multi-Band Speech Equalizer — DSP Project &copy; 2026</p>
+        <p class="footer-sub">Built with MATLAB's Signal Processing Toolbox</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
