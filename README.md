@@ -2,6 +2,12 @@
 
 This project implements digital signal processing techniques for denoising ECG signals using the MIT-BIH Arrhythmia Database.
 
+## Preview
+![Filtered vs Raw ECG](figures/fig11_filtered_vs_raw.png)
+
+## Analysis Figures
+The full set of 16 analysis figures (Frequency Response, Pole-Zero, PSD, etc.) can be found in the `figures/` directory.
+
 ## Features
 - **FIR Filter**: Hamming window based FIR filter implementation.
 - **IIR Filters**: Butterworth and Chebyshev Type II implementations.
