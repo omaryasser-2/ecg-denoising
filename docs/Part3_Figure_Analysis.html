@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part3_Figure_Analysis</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; color: #333; }
+        pre { background-color: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+        code { font-family: monospace; background-color: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px; }
+        img { max-width: 100%; height: auto; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Part 3: Visual Translation (The Figures)</h1>
+<p>Let&#39;s go through each generated figure as if we&#39;re looking at them together during your discussion.</p>
+<hr>
+<h2>Tab 1: Raw ECG</h2>
+<p><strong>X-axis</strong>: Time in seconds (0 to 10 s)
+<strong>Y-axis</strong>: Voltage in millivolts (mV)</p>
+<h3>Record 100 (top, blue)</h3>
+<p>You see ~10 sharp spikes evenly spaced — these are QRS complexes of a <strong>normal sinus rhythm</strong> (healthy heartbeat at ~72 bpm). The baseline sits around -0.3 mV and you can see slight drift — that&#39;s the baseline wander we need to remove.</p>
+<h3>Record 106 (bottom, red)</h3>
+<p>This patient has <strong>PVCs (Premature Ventricular Contractions)</strong>. Some beats look normal, others are taller/wider with a different shape — those are the abnormal beats. The morphology is noticeably different. <strong>Our filter must preserve these differences</strong> — if it smooths them away, a doctor could miss the arrhythmia.</p>
+<h3>What proves success to the TA:</h3>
+<p>You can visually see baseline drift and high-frequency fuzz on both records — confirming the noise is present and needs removal.</p>
+<hr>
+<h2>Tabs 2–4: Magnitude &amp; Phase Responses</h2>
+<p>Each tab shows a 3×2 grid: <strong>magnitude</strong> (left column) and <strong>phase</strong> (right column) for the HP, Notch, and LP sub-filters.</p>
+<h3>Magnitude Response (left column)</h3>
+<p><strong>X-axis</strong>: Frequency in Hz
+<strong>Y-axis</strong>: Gain in decibels (dB). 0 dB = unchanged, -40 dB = signal reduced by 100×.</p>
+<p><strong>HP (Baseline) — Magnitude</strong>:</p>
+<ul>
+<li>Below 0.5 Hz: the curve dips down (attenuation). For FIR it reaches about -10 dB. For Butterworth/Cheby2 it drops much more steeply (to -300 dB or more) because IIR is more efficient.</li>
+<li>Above ~1 Hz: the curve is at 0 dB (signal passes through unchanged).</li>
+<li><strong>What proves it works</strong>: The low-frequency region is attenuated. The ECG band (1+ Hz) is at 0 dB.</li>
+</ul>
+<p><strong>Notch (50 Hz) — Magnitude</strong>:</p>
+<ul>
+<li>You see a sharp V-shaped dip centered exactly at 50 Hz, reaching down to -60 to -80 dB.</li>
+<li>On either side (e.g., 40 Hz and 60 Hz) the magnitude is at 0 dB.</li>
+<li><strong>What proves it works</strong>: The notch is very narrow and deep — it kills 50 Hz without touching nearby ECG content.</li>
+</ul>
+<p><strong>LP (EMG) — Magnitude</strong>:</p>
+<ul>
+<li>Below 100 Hz: 0 dB (passes through).</li>
+<li>Above 100 Hz: drops sharply. For FIR it oscillates between -60 and -120 dB in the stopband (this is the windowed FIR&#39;s characteristic ripple). For Butterworth it drops smoothly. For Cheby2 it drops with a controlled equiripple pattern.</li>
+<li><strong>What proves it works</strong>: Everything above 100 Hz is heavily suppressed.</li>
+</ul>
+<h3>Phase Response (right column)</h3>
+<p><strong>X-axis</strong>: Frequency in Hz
+<strong>Y-axis</strong>: Phase shift in degrees</p>
+<p><strong>FIR phase</strong>: A <strong>straight line</strong> (linear phase). This is the signature of FIR filters. Every frequency gets the same time delay. The slope of the line equals the group delay.</p>
+<p><strong>IIR phase (Butterworth/Cheby2)</strong>: A <strong>curved line</strong>, especially near the cutoff frequency. This curvature IS the non-linear phase that would distort the waveform — and that&#39;s exactly why we use <code>filtfilt</code> to cancel it out.</p>
+<h3>What the TA wants to see:</h3>
+<ul>
+<li>FIR: straight phase line → proves linear phase</li>
+<li>Butterworth: smooth magnitude rolloff → proves maximally flat</li>
+<li>Chebyshev II: steeper rolloff than Butterworth at same order → proves sharper transition</li>
+</ul>
+<hr>
+<h2>Tabs 5–7: Impulse &amp; Step Responses</h2>
+<p>Each tab shows a 3×2 grid: <strong>impulse</strong> (left) and <strong>step</strong> (right) for HP, Notch, LP.</p>
+<h3>Impulse Response</h3>
+<p><strong>X-axis</strong>: Time in seconds
+<strong>Y-axis</strong>: Filter output amplitude (unitless)</p>
+<p><strong>FIR HP impulse</strong>: Almost zero for a long time, then a tall spike near the middle (around 0.7 seconds = 250th sample out of 500). This delayed spike IS the group delay. The response is <strong>symmetric</strong> around this center point — that&#39;s what gives FIR its linear phase.</p>
+<p><strong>FIR LP impulse</strong>: A sinc-like shape (tall peak at center with small oscillations on both sides). The peak occurs earlier (around 0.14 s = 50th sample) because the LP filter is only order 100.</p>
+<p><strong>IIR impulse</strong>: A sharp spike at time 0 that quickly decays. IIR filters respond immediately (no group delay) but have an exponentially decaying tail.</p>
+<h3>Step Response</h3>
+<p><strong>X-axis</strong>: Time in seconds
+<strong>Y-axis</strong>: Filter output amplitude</p>
+<p>Feed in a constant &quot;1&quot; and see how the filter settles:</p>
+<p><strong>HP step</strong>: Starts at 0, may spike, then settles back toward 0. This makes sense — a HP filter blocks DC (constant values). A step signal IS DC, so the output must eventually go to zero.</p>
+<p><strong>Notch step</strong>: Quickly settles to ~1.0 with small oscillations. This makes sense — a step signal has no 50 Hz component, so the notch filter passes it almost unchanged.</p>
+<p><strong>LP step</strong>: Rises from 0 to 1.0 and stays there. A constant signal has zero frequency (DC), and a low-pass filter passes DC.</p>
+<h3>What proves success to the TA:</h3>
+<ul>
+<li>FIR impulse is symmetric → confirms linear phase property.</li>
+<li>IIR impulse decays to zero → confirms stability (it doesn&#39;t blow up).</li>
+<li>Step responses settle to physically expected values (HP→0, Notch→1, LP→1).</li>
+</ul>
+<hr>
+<h2>Tabs 8–10: Pole-Zero Diagrams</h2>
+<p><strong>X-axis</strong>: Real part of z
+<strong>Y-axis</strong>: Imaginary part of z
+<strong>The dotted circle</strong>: The unit circle (|z| = 1)
+<strong>○ symbols</strong>: Zeros
+<strong>× symbols</strong>: Poles</p>
+<h3>FIR Pole-Zero (Tab 8):</h3>
+<ul>
+<li><strong>Zeros</strong>: Hundreds of small circles distributed around the unit circle. Their angular positions correspond to the frequencies being blocked.</li>
+<li><strong>Poles</strong>: A cluster labeled &quot;500&quot; at the origin (z = 0). FIR filters always have all poles at the origin. This guarantees stability.</li>
+<li><strong>What proves success</strong>: ALL poles are at origin → system is always stable, period.</li>
+</ul>
+<h3>Butterworth Pole-Zero (Tab 9):</h3>
+<ul>
+<li><strong>HP</strong>: A few poles (×) clustered near z = 1 on the real axis, still inside the unit circle. A few zeros (○) also visible.</li>
+<li><strong>Notch</strong>: Two zeros ON the unit circle at the angle corresponding to 50 Hz. These zeros force the gain to exactly zero at 50 Hz — that&#39;s how the notch works.</li>
+<li><strong>LP</strong>: Poles inside the unit circle near the angle corresponding to 100 Hz. The &quot;4&quot; label means 4 poles at z = -1.</li>
+<li><strong>What proves success</strong>: ALL poles (×) are INSIDE the dotted circle → filter is stable.</li>
+</ul>
+<h3>Chebyshev II Pole-Zero (Tab 10):</h3>
+<p>Similar to Butterworth, but the zero positions differ. Chebyshev II places zeros in the stopband to create the equiripple pattern.</p>
+<h3>What the TA wants to see:</h3>
+<p><strong>Every single × (pole) must be inside the unit circle.</strong> This is THE stability test. If you can point at the plot and say &quot;all poles are inside the unit circle, therefore the system is BIBO stable,&quot; you&#39;ve nailed it.</p>
+<hr>
+<h2>Tab 11: Filtered vs Raw</h2>
+<p><strong>X-axis</strong>: Time in seconds (1 to 5 s window)
+<strong>Y-axis</strong>: Voltage in mV</p>
+<p>Four panels stacked vertically:</p>
+<ol>
+<li><strong>Original (black)</strong>: QRS spikes visible, but the baseline wanders and there&#39;s visible high-frequency fuzz.</li>
+<li><strong>FIR (blue)</strong>: Cleaner, but the signal appears <strong>shifted to the right</strong> compared to the original. This is the 550-sample group delay.</li>
+<li><strong>Butterworth (red)</strong>: Clean, and the peaks line up perfectly with the original (zero phase from <code>filtfilt</code>). Baseline is flat near 0 mV.</li>
+<li><strong>Chebyshev II (green)</strong>: Very similar to Butterworth. Possibly slightly cleaner due to sharper cutoff.</li>
+</ol>
+<h3>What proves success:</h3>
+<ul>
+<li>Baseline is now flat (no more drift) → HP worked.</li>
+<li>No visible 50 Hz ripple → Notch worked.</li>
+<li>Less high-frequency fuzz → LP worked.</li>
+<li>QRS peaks are preserved in shape and timing (for IIR).</li>
+</ul>
+<hr>
+<h2>Tab 12: QRS Zoom</h2>
+<p><strong>X-axis</strong>: Time (1.5 to 3.5 s)
+<strong>Y-axis</strong>: Voltage (mV)</p>
+<p>Zoomed view of 2-3 heartbeats overlaying original and filtered signals:</p>
+<p><strong>Top panel (IIR filters)</strong>:
+The original (black), Butterworth (red dashed), and Chebyshev II (green dash-dot) traces overlap almost perfectly. The QRS peaks, P-waves, and T-waves maintain their shape and timing. This proves <code>filtfilt</code> achieved zero-phase filtering.</p>
+<p><strong>Bottom panel (FIR)</strong>:
+The FIR trace (blue dashed) has the same shape as the original, but it&#39;s <strong>shifted to the right</strong> by about 1.5 seconds. This is the group delay. The waveform itself is not distorted — just delayed.</p>
+<h3>What proves success:</h3>
+<ul>
+<li>IIR signals overlap with original → zero phase distortion confirmed.</li>
+<li>FIR signal has same shape but is shifted → linear phase (constant delay) confirmed.</li>
+<li>QRS amplitude is preserved → no diagnostic information is lost.</li>
+</ul>
+<hr>
+<h2>Tab 13: PSD (Welch Method)</h2>
+<p><strong>X-axis</strong>: Frequency in Hz (0 to 180 Hz)
+<strong>Y-axis</strong>: Power Spectral Density in dB/Hz</p>
+<p><strong>Left panel (IIR vs Raw)</strong>:</p>
+<ul>
+<li>Black line (Raw): Shows the full power spectrum. You can see energy across the entire range.</li>
+<li>Red/Green lines (Butterworth/Cheby2): Energy drops sharply above ~100 Hz (LP effect). The drop is 20-40 dB below the raw signal in the 100-180 Hz region. Near 0 Hz, the filtered signals have less energy (HP effect).</li>
+</ul>
+<p><strong>Right panel (FIR vs Raw)</strong>:</p>
+<ul>
+<li>The blue line (FIR) shows a sharp cutoff at 100 Hz — a near-vertical drop. This is the FIR LP filter&#39;s sharp transition (500 taps gives a steep wall). Near 50 Hz, there&#39;s a dip where the notch filter removed power.</li>
+</ul>
+<h3>What proves success:</h3>
+<ul>
+<li>Energy above 100 Hz is significantly reduced → EMG noise removed.</li>
+<li>Energy below ~0.5 Hz is reduced → baseline wander removed.</li>
+<li>A dip near 50 Hz → power-line noise removed.</li>
+<li>Energy between 1-40 Hz is <strong>unchanged</strong> → ECG content preserved.</li>
+</ul>
+<hr>
+<h2>Tab 14: Spectrogram (STFT)</h2>
+<p><strong>X-axis</strong>: Time in seconds
+<strong>Y-axis</strong>: Frequency in Hz (0 to 100 Hz)
+<strong>Color</strong>: Power in dB (yellow = high, blue = low)</p>
+<p>Four panels: Raw, Butterworth, FIR, Chebyshev II.</p>
+<h3>Raw spectrogram:</h3>
+<ul>
+<li>Vertical bright bands at each heartbeat (QRS complexes are broadband energy bursts — they light up across all frequencies simultaneously).</li>
+<li>A faint horizontal band around 50 Hz (constant powerline interference throughout the recording).</li>
+<li>Fairly uniform energy across the frequency range.</li>
+</ul>
+<h3>Filtered spectrograms:</h3>
+<ul>
+<li>The 50 Hz horizontal band <strong>disappears</strong> (most visible in FIR, where you can see a clear dark horizontal line at 50 Hz).</li>
+<li>Energy above ~80-100 Hz becomes much weaker (more blue/dark).</li>
+<li>The vertical heartbeat bands are still clearly visible — the filter preserved the QRS transients.</li>
+</ul>
+<h3>What proves success:</h3>
+<ul>
+<li>The 50 Hz horizontal line vanishes → notch filter worked.</li>
+<li>High-frequency region becomes darker → LP filter worked.</li>
+<li>QRS vertical bands survive → signal content preserved.</li>
+<li>The spectrogram shows filtering effect <strong>over time</strong> (not just averaged like PSD), proving the filter works consistently throughout the recording.</li>
+</ul>
+<hr>
+<h2>Tab 15: SNR Bar Chart</h2>
+<p><strong>X-axis</strong>: Filter type (Raw, FIR, Butterworth, Chebyshev II)
+<strong>Y-axis</strong>: SNR in dB</p>
+<ul>
+<li><strong>Raw (gray)</strong>: About -5 dB. Noise is actually stronger than signal.</li>
+<li><strong>FIR (blue)</strong>: About 3.5 dB. Modest improvement (~8.5 dB gain).</li>
+<li><strong>Butterworth (red)</strong>: About 30 dB. Massive improvement (~35 dB gain).</li>
+<li><strong>Chebyshev II (green)</strong>: About 37 dB. Best result (~42 dB gain).</li>
+</ul>
+<h3>Why is FIR so much lower?</h3>
+<p>The FIR HP filter at order 500 can&#39;t achieve a sharp enough cutoff at 0.5 Hz (the normalized frequency is extremely low: 0.00278). It doesn&#39;t block baseline wander as aggressively as the IIR filters. Also, <code>filter</code> (causal) vs <code>filtfilt</code> (zero-phase, doubled order) makes a huge difference in effective stopband attenuation.</p>
+<h3>What proves success:</h3>
+<p>All three filters improve SNR over the raw signal. IIR filters show dramatically better performance because of their efficient low-frequency selectivity and the <code>filtfilt</code> order-doubling effect.</p>
+<hr>
+<h2>Tab 16: Record 106 (PVC Morphology)</h2>
+<p><strong>X-axis</strong>: Time (1 to 6 s)
+<strong>Y-axis</strong>: Voltage (mV)</p>
+<p><strong>Top (black)</strong>: Raw Record 106 showing normal beats interspersed with PVCs (wider, taller, differently shaped beats).</p>
+<p><strong>Bottom (red)</strong>: After Butterworth filtering. The PVCs are still clearly distinguishable from normal beats — their unique morphology is preserved. The baseline is now flat, and noise is reduced.</p>
+<h3>What proves success:</h3>
+<p>The filter cleaned the signal without making PVCs look like normal beats. A cardiologist could still identify the arrhythmia from the filtered signal. This is the ultimate test: <strong>noise removal without diagnostic information loss</strong>.</p>
+
+</body>
+</html>

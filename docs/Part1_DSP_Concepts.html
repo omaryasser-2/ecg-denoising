@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part1_DSP_Concepts</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; color: #333; }
+        pre { background-color: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+        code { font-family: monospace; background-color: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px; }
+        img { max-width: 100%; height: auto; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Part 1: The Foundational DSP Concepts</h1>
+<p>Before we touch the code, let&#39;s build up every concept you need from absolute zero.</p>
+<hr>
+<h2>1.1 What is an ECG Signal?</h2>
+<p>An ECG (Electrocardiogram) is a recording of the electrical activity of the heart. Electrodes on your skin pick up tiny voltage changes (millivolts) as the heart muscles contract and relax.</p>
+<p>A single heartbeat produces a characteristic waveform with labeled parts:</p>
+<ul>
+<li><strong>P-wave</strong>: the atria (upper chambers) contracting</li>
+<li><strong>QRS complex</strong>: the ventricles (lower chambers) contracting — this is the tall, sharp spike</li>
+<li><strong>T-wave</strong>: the ventricles relaxing</li>
+</ul>
+<p>The <strong>QRS complex</strong> is the most important feature for diagnosis. It&#39;s sharp, fast, and contains frequencies up to about 30–40 Hz. The P and T waves are slower (0.5–10 Hz).</p>
+<p><strong>Our data</strong> comes from the MIT-BIH Arrhythmia Database:</p>
+<ul>
+<li><strong>Record 100</strong>: Normal sinus rhythm (healthy heartbeat)</li>
+<li><strong>Record 106</strong>: Contains PVCs (Premature Ventricular Contractions) — abnormal early beats with a different shape</li>
+</ul>
+<p>The signals are sampled at <strong>fs = 360 Hz</strong>, meaning the equipment measures the voltage 360 times per second.</p>
+<hr>
+<h2>1.2 What is &quot;Sampling Frequency&quot; and &quot;Nyquist&quot;?</h2>
+<p><strong>Sampling frequency (fs)</strong>: How many measurements per second. Our ECG = 360 samples/second.</p>
+<p><strong>Nyquist frequency</strong>: Exactly half of fs. For us: 360/2 = <strong>180 Hz</strong>. This is the highest frequency that our digital system can possibly represent. Any frequency above 180 Hz simply cannot exist in our data.</p>
+<p><strong>Why this matters</strong>: When we design filters in MATLAB, all frequencies must be expressed as a fraction of the Nyquist frequency. This is called <strong>normalized frequency</strong>. For example:</p>
+<ul>
+<li>0.5 Hz becomes <code>0.5 / 180 = 0.00278</code></li>
+<li>50 Hz becomes <code>50 / 180 = 0.2778</code></li>
+<li>100 Hz becomes <code>100 / 180 = 0.5556</code></li>
+</ul>
+<p>This is why you see <code>0.5/(fs/2)</code> everywhere in the code — it&#39;s converting real Hz to normalized.</p>
+<hr>
+<h2>1.3 The Three Noises Contaminating ECG</h2>
+<p>When electrodes record the heart, they also pick up three types of unwanted interference:</p>
+<h3>Noise 1: Baseline Wander (&lt; 0.5 Hz)</h3>
+<ul>
+<li><strong>Source</strong>: The patient breathes, and the chest moves. The electrodes shift slightly.</li>
+<li><strong>What it looks like</strong>: The entire ECG trace slowly drifts up and down over several seconds.</li>
+<li><strong>Frequency</strong>: Very slow — below 0.5 Hz (less than one full cycle every 2 seconds).</li>
+<li><strong>Why it&#39;s bad</strong>: It makes the trace &quot;wander&quot; vertically. A doctor might mistake the drift for an ST-segment elevation (which indicates a heart attack).</li>
+</ul>
+<h3>Noise 2: Power-line Interference (50 Hz)</h3>
+<ul>
+<li><strong>Source</strong>: The electrical wiring in the walls radiates electromagnetic fields at 50 Hz (the mains frequency in your country). The ECG cables act like antennas.</li>
+<li><strong>What it looks like</strong>: A fast sinusoidal ripple sitting on top of the ECG.</li>
+<li><strong>Frequency</strong>: Exactly 50 Hz.</li>
+<li><strong>Why it&#39;s bad</strong>: It adds a visible buzz to the trace, masking the smaller P-wave and T-wave.</li>
+</ul>
+<h3>Noise 3: EMG / Muscle Noise (20–150 Hz)</h3>
+<ul>
+<li><strong>Source</strong>: Skeletal muscles near the electrodes (arms, chest) fire random electrical signals.</li>
+<li><strong>What it looks like</strong>: High-frequency fuzz/static that makes the trace look &quot;hairy.&quot;</li>
+<li><strong>Frequency</strong>: Spread across 20–150 Hz, but we only care about removing the part <strong>above 100 Hz</strong> because ECG content goes up to ~100 Hz.</li>
+<li><strong>Why it&#39;s bad</strong>: It buries the fine details of the QRS complex.</li>
+</ul>
+<h3>Our Strategy: Three Filters in a Row</h3>
+<pre><code>Raw ECG → [High-Pass at 0.5 Hz] → [Notch at 50 Hz] → [Low-Pass at 100 Hz] → Clean ECG
+             kills baseline            kills power          kills EMG
+             wander                     line hum             muscle noise
+</code></pre>
+<hr>
+<h2>1.4 What is a Digital Filter?</h2>
+<p>A digital filter is a mathematical operation that takes your signal (a list of numbers) and produces a new list of numbers where certain frequencies have been amplified or suppressed.</p>
+<p>Think of it like an audio equalizer on your phone — you can boost bass (low frequencies) or cut treble (high frequencies). Except here we&#39;re doing it with math on the raw data.</p>
+<p>Every digital filter is defined by a <strong>difference equation</strong>:</p>
+<pre><code>y[n] = b₀·x[n] + b₁·x[n-1] + b₂·x[n-2] + ...
+       - a₁·y[n-1] - a₂·y[n-2] - ...
+</code></pre>
+<ul>
+<li><code>x[n]</code> = current input sample</li>
+<li><code>y[n]</code> = current output sample</li>
+<li><code>b</code> coefficients = <strong>feedforward</strong> (they look at current and past inputs)</li>
+<li><code>a</code> coefficients = <strong>feedback</strong> (they look at past outputs)</li>
+</ul>
+<p>This is where the two main filter families come from.</p>
+<hr>
+<h2>1.5 FIR vs IIR Filters</h2>
+<h3>FIR = Finite Impulse Response</h3>
+<p>An FIR filter <strong>only has <code>b</code> coefficients</strong>. The <code>a</code> side is just <code>a₀ = 1</code> (no feedback). The equation becomes:</p>
+<pre><code>y[n] = b₀·x[n] + b₁·x[n-1] + b₂·x[n-2] + ... + bₙ·x[n-N]
+</code></pre>
+<ul>
+<li>It only looks at the current and past <strong>N input</strong> values. It never looks at its own past outputs.</li>
+<li>If you feed in a single impulse (one spike followed by silence), the output will eventually reach zero after exactly N+1 samples. That&#39;s why it&#39;s &quot;Finite.&quot;</li>
+</ul>
+<p><strong>Key properties</strong>:</p>
+<ul>
+<li>✅ <strong>Always stable</strong>: Since there&#39;s no feedback, it can never oscillate or blow up.</li>
+<li>✅ <strong>Linear phase</strong> (with symmetric coefficients): All frequency components are delayed by the same amount. The waveform shape is perfectly preserved — just shifted in time.</li>
+<li>❌ <strong>Needs many taps</strong>: To get a sharp cutoff at low frequencies (like 0.5 Hz when fs=360), you need hundreds of coefficients (our code uses 500).</li>
+</ul>
+<h3>IIR = Infinite Impulse Response</h3>
+<p>An IIR filter <strong>has both <code>b</code> and <code>a</code> coefficients</strong>. The equation has feedback:</p>
+<pre><code>y[n] = b₀·x[n] + b₁·x[n-1] ... - a₁·y[n-1] - a₂·y[n-2] ...
+</code></pre>
+<ul>
+<li>It looks at past <strong>outputs</strong> too. This feedback creates a recursive loop.</li>
+<li>If you feed in a single impulse, the output theoretically never reaches exactly zero — it decays exponentially forever. That&#39;s why it&#39;s &quot;Infinite.&quot;</li>
+</ul>
+<p><strong>Key properties</strong>:</p>
+<ul>
+<li>✅ <strong>Very efficient</strong>: A 4th-order IIR can match the sharpness of a 500-tap FIR.</li>
+<li>❌ <strong>Can be unstable</strong>: If the feedback coefficients are wrong, the output can grow without bound.</li>
+<li>❌ <strong>Non-linear phase</strong>: Different frequencies get delayed by different amounts, which distorts the waveform shape. (We fix this with <code>filtfilt</code> — explained below.)</li>
+</ul>
+<hr>
+<h2>1.6 The Three IIR Filter Designs in Our Project</h2>
+<h3>Butterworth</h3>
+<ul>
+<li><strong>Philosophy</strong>: &quot;Maximally flat&quot; in the passband. The magnitude response is as smooth as possible — no ripples, no bumps. It just gradually rolls off.</li>
+<li><strong>Trade-off</strong>: Because it refuses to ripple, its transition from passband to stopband is wider (gentler slope) compared to other designs at the same order.</li>
+<li><strong>In our code</strong>: <code>butter(4, ...)</code> — 4th order.</li>
+</ul>
+<h3>Chebyshev Type II</h3>
+<ul>
+<li><strong>Philosophy</strong>: Allow controlled ripple in the <strong>stopband</strong> (the region you&#39;re blocking) to get a <strong>sharper transition</strong> than Butterworth.</li>
+<li><strong>Passband</strong>: Completely flat (monotonic) — no ripple where your signal lives.</li>
+<li><strong>Stopband</strong>: Has an equiripple pattern, but the ripples never exceed a guaranteed minimum attenuation (we set Rs=40 dB, meaning the noise is at least 10,000× weaker in power).</li>
+<li><strong>Why Type II and not Type I?</strong> Type I has ripple in the passband, which would distort our ECG. Type II puts the ripple in the stopband where we don&#39;t care.</li>
+<li><strong>In our code</strong>: <code>cheby2(4, 40, ...)</code> — 4th order, 40 dB stopband attenuation.</li>
+</ul>
+<h3>iirnotch (Used for the 50 Hz Notch)</h3>
+<ul>
+<li>A specialized 2nd-order IIR filter that creates a very narrow &quot;notch&quot; (dip) at exactly one frequency.</li>
+<li><strong>Q-factor = 30</strong>: Controls the width. Higher Q = narrower notch. Q=30 means only about 50 ± 0.83 Hz is removed. Everything else passes unchanged.</li>
+<li>Used for both Butterworth and Chebyshev sets because it&#39;s already the most efficient design for a single-frequency notch.</li>
+</ul>
+<hr>
+<h2>1.7 The Hamming Window (FIR Design Method)</h2>
+<p>To design an FIR filter, MATLAB&#39;s <code>fir1</code> function:</p>
+<ol>
+<li>Starts with an <strong>ideal filter</strong> (a perfect brick wall that passes everything below the cutoff and blocks everything above).</li>
+<li>Computes the ideal filter&#39;s impulse response — mathematically, it&#39;s a <strong>sinc function</strong> (sin(x)/x), which is infinitely long.</li>
+<li><strong>Truncates</strong> it to N+1 samples (since we can&#39;t have infinite coefficients).</li>
+<li>The abrupt truncation creates ugly artifacts: the frequency response develops &quot;ringing&quot; oscillations near the cutoff, called <strong>Gibbs phenomenon</strong>.</li>
+<li>To fix this, we multiply the truncated impulse response by a <strong>window function</strong> that smoothly tapers the edges to zero.</li>
+</ol>
+<p><strong>The Hamming window</strong> is one specific window shape. It:</p>
+<ul>
+<li>Suppresses sidelobes to about <strong>-53 dB</strong> (good for ECG where we need ~40 dB suppression).</li>
+<li>Has a reasonably narrow main lobe (the transition band isn&#39;t too wide).</li>
+<li>Is a good all-around choice — not the best at any one thing, but solid at everything.</li>
+</ul>
+<hr>
+<h2>1.8 Linear Phase vs Zero-Phase Filtering</h2>
+<h3>Linear Phase (FIR)</h3>
+<ul>
+<li>A linear-phase filter delays all frequencies by exactly the same amount: <strong>(N)/2 samples</strong>.</li>
+<li>The waveform shape is perfectly preserved — it&#39;s just shifted to the right in time.</li>
+<li>Our FIR cascade has total delay = (500 + 500 + 100)/2 = <strong>550 samples ≈ 1.53 seconds</strong>.</li>
+<li>You can see this shift in the QRS Zoom tab.</li>
+</ul>
+<h3>Zero-Phase (filtfilt with IIR)</h3>
+<ul>
+<li><code>filtfilt</code> is a MATLAB trick: it filters the signal <strong>forward</strong>, then <strong>flips the signal and filters it again backward</strong>.</li>
+<li>The forward pass introduces a phase shift; the backward pass introduces the exact opposite phase shift. They cancel out → <strong>zero phase distortion</strong>.</li>
+<li>The output is not shifted at all — the QRS peaks stay in exactly the right place.</li>
+<li><strong>Catch</strong>: You need the <strong>entire signal</strong> before you start. You can&#39;t do this in real-time (you&#39;d need future samples). This is fine for offline analysis but impossible for a live heart monitor.</li>
+<li><strong>Bonus</strong>: It also doubles the effective filter order (a 4th-order Butterworth becomes effectively 8th-order after filtfilt).</li>
+</ul>
+<hr>
+<h2>1.9 Power Spectral Density (PSD) — Welch Method</h2>
+<p><strong>PSD</strong> tells you how much power (energy) your signal has at each frequency. It&#39;s like an X-ray of the signal&#39;s frequency content.</p>
+<p><strong>The Welch method</strong> is a specific way to estimate PSD:</p>
+<ol>
+<li>Chop the signal into overlapping segments (we use 1024-sample segments, 50% overlap).</li>
+<li>Multiply each segment by a Hamming window (to reduce spectral leakage).</li>
+<li>Compute the FFT (frequency spectrum) of each segment.</li>
+<li>Square the magnitude of each FFT to get power.</li>
+<li>Average all segments together.</li>
+</ol>
+<p><strong>Why Welch?</strong> A single FFT of the whole signal is very noisy/spiky. By averaging many overlapping segments, the Welch method produces a smoother, more reliable estimate.</p>
+<p><strong>What we look for</strong>: After filtering, the PSD should show:</p>
+<ul>
+<li>Energy near 0 Hz (baseline wander) → <strong>reduced by the HP filter</strong></li>
+<li>A spike at 50 Hz → <strong>gone after the notch filter</strong></li>
+<li>Energy above 100 Hz → <strong>suppressed by the LP filter</strong></li>
+<li>Energy between 0.5–40 Hz (actual ECG) → <strong>preserved</strong></li>
+</ul>
+<hr>
+<h2>1.10 Signal-to-Noise Ratio (SNR)</h2>
+<p>SNR is a single number that tells you how much louder your desired signal is compared to the noise.</p>
+<pre><code>SNR = 10 × log₁₀(Power_signal / Power_noise)    [in dB]
+</code></pre>
+<ul>
+<li><strong>Positive SNR</strong>: Signal is stronger than noise (good).</li>
+<li><strong>Negative SNR</strong>: Noise is stronger than signal (bad).</li>
+<li><strong>Every +10 dB</strong>: The signal-to-noise power ratio increases by 10×.</li>
+</ul>
+<p>In our code, we define:</p>
+<ul>
+<li><strong>Signal band</strong>: 0.5–40 Hz (where the ECG actually lives)</li>
+<li><strong>Noise bands</strong>: &lt; 0.5 Hz (baseline), 49–51 Hz (powerline), &gt; 100 Hz (EMG)</li>
+</ul>
+<p>We sum the PSD in each region to estimate power, then compute the ratio. Our results:</p>
+<ul>
+<li>Raw ECG: <strong>≈ -5 dB</strong> (noise dominates!)</li>
+<li>After FIR: <strong>≈ 3.5 dB</strong> (slight improvement)</li>
+<li>After Butterworth: <strong>≈ 30 dB</strong> (huge improvement)</li>
+<li>After Chebyshev II: <strong>≈ 37 dB</strong> (best)</li>
+</ul>
+
+</body>
+</html>

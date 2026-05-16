@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part2_Code_Walkthrough</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; color: #333; }
+        pre { background-color: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }
+        code { font-family: monospace; background-color: #f5f5f5; padding: 0.2rem 0.4rem; border-radius: 3px; }
+        img { max-width: 100%; height: auto; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 1rem; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Part 2: Line-by-Line Code Logic &amp; Algorithm</h1>
+<p>This walks through every line of <code>ecg_denoising.m</code>, explaining what each function does, why we chose it, and how the parameters connect to the DSP concepts from Part 1.</p>
+<hr>
+<h2>Lines 1–14: Header Comments</h2>
+<pre><code class="language-matlab">% ECG Signal: fs=360Hz, useful BW=0.5-100Hz, 11-bit/10mV
+% Noise: baseline wander (&lt;0.5Hz), 50Hz powerline, EMG (20-150Hz)
+% Filter Specs:
+%   HP:    cutoff=0.5Hz, PB ripple&lt;=1dB, SB atten&gt;=40dB
+%   Notch: 50Hz center, PB ripple&lt;=0.5dB, SB atten&gt;=30dB
+%   LP:    cutoff=100Hz, PB ripple&lt;=1dB, SB atten&gt;=40dB
+</code></pre>
+<p>These comments summarize the engineering specifications. <strong>PB ripple</strong> = how much the magnitude is allowed to deviate from 0 dB in the passband. <strong>SB atten</strong> = how far below 0 dB the filter must push frequencies in the stopband. These numbers come from clinical ECG standards (AHA guidelines).</p>
+<hr>
+<h2>Lines 15–22: Setup</h2>
+<pre><code class="language-matlab">clc; clear; close all;
+fs = 360; T = 10; N_seg = T * fs;
+</code></pre>
+<ul>
+<li><code>clc</code> = clear command window; <code>clear</code> = delete all variables; <code>close all</code> = close all figures.</li>
+<li><code>fs = 360</code>: Sampling rate of the MIT-BIH database. Fixed by the data source.</li>
+<li><code>T = 10</code>: We take 10 seconds of data (enough for ~10 heartbeats at 60 bpm).</li>
+<li><code>N_seg = 3600</code>: Total samples = 10 × 360.</li>
+</ul>
+<pre><code class="language-matlab">scriptDir = fileparts(mfilename(&#39;fullpath&#39;));
+figDir = fullfile(scriptDir, &#39;figures&#39;);
+if ~exist(figDir,&#39;dir&#39;), mkdir(figDir); end
+Nfft = 4096;
+</code></pre>
+<ul>
+<li>Builds an absolute path for saving figures regardless of MATLAB&#39;s current directory.</li>
+<li><code>Nfft = 4096</code>: Number of frequency points for <code>freqz</code>. More points = smoother frequency response plots. 4096 is a power of 2 (efficient for FFT internally).</li>
+</ul>
+<hr>
+<h2>Lines 24–26: Loading ECG Data</h2>
+<pre><code class="language-matlab">[sig100,~,~] = rdsamp(&#39;100&#39;,[],N_seg);
+ecg100 = sig100(:,1);
+t100 = (0:length(ecg100)-1)/fs;
+</code></pre>
+<p><strong><code>rdsamp</code></strong>: A function from the WFDB Toolbox (not built into MATLAB). It reads the binary <code>.dat</code> files from the MIT-BIH database.</p>
+<ul>
+<li><code>&#39;100&#39;</code>: Record name (looks for <code>100.dat</code> and <code>100.hea</code> in the current directory).</li>
+<li><code>[]</code>: Read all channels.</li>
+<li><code>N_seg</code>: Read only the first 3600 samples.</li>
+<li>Returns a matrix where each column is a different ECG lead.</li>
+</ul>
+<p><strong><code>sig100(:,1)</code></strong>: Extracts column 1, which is the <strong>Modified Lead II (MLII)</strong> — the standard lead for arrhythmia detection.</p>
+<p><strong><code>t100 = (0:length(ecg100)-1)/fs</code></strong>: Creates a time vector in seconds. Sample 0 → 0 seconds, sample 1 → 1/360 seconds, sample 3599 → 9.997 seconds.</p>
+<hr>
+<h2>Lines 28–32: FIR Filter Design (Hamming Window)</h2>
+<pre><code class="language-matlab">N_hp_fir = 500;
+b_fir_hp = fir1(N_hp_fir, 0.5/(fs/2), &#39;high&#39;, hamming(N_hp_fir+1));
+a_fir_hp = 1;
+</code></pre>
+<h3>What <code>fir1</code> does:</h3>
+<ol>
+<li>Designs a <strong>windowed-sinc FIR filter</strong> of order N (which means N+1 = 501 coefficients).</li>
+<li><code>0.5/(fs/2)</code> = <code>0.5/180 = 0.00278</code> — the normalized cutoff frequency.</li>
+<li><code>&#39;high&#39;</code> = high-pass filter (blocks below cutoff, passes above).</li>
+<li><code>hamming(501)</code> = apply a 501-point Hamming window to the truncated sinc to suppress Gibbs ringing.</li>
+</ol>
+<h3>Why <code>fir1</code> and not <code>firpm</code> or <code>fir2</code>?</h3>
+<ul>
+<li><code>fir1</code> uses the <strong>window method</strong> — simplest, most intuitive, and perfectly adequate for our specs.</li>
+<li><code>firpm</code> uses Parks-McClellan (optimal equiripple) — more complex, used when you need the absolute minimum order. Overkill for a course project.</li>
+<li><code>fir2</code> uses frequency sampling — good for arbitrary shapes, not needed here.</li>
+</ul>
+<h3>Why order 500?</h3>
+<p>The HP filter must transition from blocking at 0 Hz to passing at 0.5 Hz. That&#39;s a tiny normalized frequency (0.00278). The rule of thumb for <code>fir1</code> with Hamming is: <code>N ≈ 3.3 / (transition_width / fs)</code>. For a 0.5 Hz transition: <code>N ≈ 3.3 / (0.5/360) ≈ 2376</code>. We use 500 as a practical compromise — it won&#39;t get a razor-sharp cutoff, but it&#39;s enough to significantly reduce baseline wander.</p>
+<h3>Why <code>a_fir_hp = 1</code>?</h3>
+<p>FIR filters have no denominator (no feedback). The difference equation is purely feedforward. Setting <code>a = 1</code> tells MATLAB there&#39;s no recursive part.</p>
+<pre><code class="language-matlab">N_notch_fir = 500;
+b_fir_notch = fir1(N_notch_fir, [48 52]/(fs/2), &#39;stop&#39;, hamming(N_notch_fir+1));
+</code></pre>
+<ul>
+<li><code>[48 52]/(fs/2)</code>: Two cutoff frequencies → bandstop (notch). Blocks 48–52 Hz, passes everything else.</li>
+<li><code>&#39;stop&#39;</code>: Bandstop filter type.</li>
+<li>Order 500 because the notch must be narrow (only 4 Hz wide) — FIR needs many taps for narrow transitions.</li>
+</ul>
+<pre><code class="language-matlab">N_lp_fir = 100;
+b_fir_lp = fir1(N_lp_fir, 100/(fs/2), &#39;low&#39;, hamming(N_lp_fir+1));
+</code></pre>
+<ul>
+<li><code>100/(fs/2) = 0.556</code>: Normalized cutoff at 100 Hz.</li>
+<li><code>&#39;low&#39;</code>: Low-pass filter.</li>
+<li><strong>Only order 100</strong> because 100 Hz is a relatively high frequency (0.556 normalized) — the transition band is wide in absolute terms, so fewer taps suffice.</li>
+</ul>
+<hr>
+<h2>Lines 34–37: IIR Butterworth Design</h2>
+<pre><code class="language-matlab">[b_but_hp, a_but_hp] = butter(4, 0.5/(fs/2), &#39;high&#39;);
+</code></pre>
+<h3>What <code>butter</code> does:</h3>
+<ol>
+<li>Designs an analog Butterworth prototype (maximally flat).</li>
+<li>Converts it to digital using the <strong>bilinear transform</strong> (maps the analog s-plane to the digital z-plane, preserving stability).</li>
+<li>Returns both <code>b</code> (numerator) and <code>a</code> (denominator) coefficients.</li>
+</ol>
+<h3>Why order 4?</h3>
+<ul>
+<li>Butterworth at order 4 gives ~80 dB/decade rolloff (the slope of the magnitude curve). This is steep enough for ECG.</li>
+<li>Compare: our FIR needed order 500 for the same cutoff. IIR&#39;s feedback makes it exponentially more efficient.</li>
+<li>Going higher (6, 8) would be sharper but risks numerical instability in MATLAB&#39;s direct-form implementation.</li>
+</ul>
+<h3>Why <code>butter</code> and not <code>cheby1</code> here?</h3>
+<p>Butterworth is our &quot;clean&quot; reference — maximally flat passband, no ripple. We use Chebyshev separately as a comparison.</p>
+<pre><code class="language-matlab">w0 = 50/(fs/2);
+bw = w0/30;
+[b_but_notch, a_but_notch] = iirnotch(w0, bw);
+</code></pre>
+<h3>What <code>iirnotch</code> does:</h3>
+<p>Creates a 2nd-order IIR notch filter that places a deep null at exactly <code>w0</code>.</p>
+<ul>
+<li><code>w0 = 50/180 = 0.2778</code>: Normalized center frequency.</li>
+<li><code>bw = w0/30</code>: The 3-dB bandwidth. This determines the <strong>Q-factor</strong> (Quality factor = w0/bw = 30). Higher Q = narrower notch.</li>
+<li>Q=30 means the notch is only about <strong>50 ± 0.83 Hz</strong> — surgically precise.</li>
+</ul>
+<h3>Why <code>iirnotch</code> instead of a bandstop <code>butter</code>?</h3>
+<p>A Butterworth bandstop would need a higher order to achieve the same narrow notch. <code>iirnotch</code> is purpose-built for removing a single frequency — it&#39;s the cleanest, most efficient solution.</p>
+<hr>
+<h2>Lines 39–42: IIR Chebyshev Type II Design</h2>
+<pre><code class="language-matlab">[b_ch2_hp, a_ch2_hp] = cheby2(4, 40, 0.5/(fs/2), &#39;high&#39;);
+</code></pre>
+<h3>What <code>cheby2</code> does:</h3>
+<p>Same process as <code>butter</code> (analog prototype → bilinear transform → digital), but with a Chebyshev Type II characteristic.</p>
+<ul>
+<li><code>4</code>: Filter order.</li>
+<li><code>40</code>: <strong>Rs = 40 dB</strong> — the minimum stopband attenuation. Noise in the stopband will be at least 40 dB (100×) below the passband.</li>
+<li><code>0.5/(fs/2)</code>: This is the <strong>stopband edge</strong> frequency (not the passband edge like Butterworth). For Cheby2, the cutoff specification has a slightly different meaning.</li>
+</ul>
+<h3>Why use Chebyshev II as our third filter set?</h3>
+<ul>
+<li>It gives us a <strong>sharper transition</strong> than Butterworth at the same order.</li>
+<li>Its passband is monotonically flat (no ripple where ECG lives).</li>
+<li>The equiripple behavior is in the stopband, where we don&#39;t care about ripple.</li>
+<li>It&#39;s the ideal comparison: Butterworth = smoothest, Chebyshev II = sharpest.</li>
+</ul>
+<hr>
+<h2>Lines 44–49: Organizing Filters into Cell Arrays</h2>
+<pre><code class="language-matlab">b_fir_all = {b_fir_hp, b_fir_notch, b_fir_lp};
+a_fir_all = {a_fir_hp, a_fir_notch, a_fir_lp};
+</code></pre>
+<p>Cell arrays let us store filters of different sizes in one container. This enables looping through all 9 filters (3 types × 3 sub-filters) with <code>for</code> loops instead of copy-pasting code 9 times.</p>
+<hr>
+<h2>Lines 51–68: Applying the Filter Cascades</h2>
+<h3>FIR Cascade (Lines 54–58)</h3>
+<pre><code class="language-matlab">ecg_fir = filter(b_fir_hp, 1, ecg);
+ecg_fir = filter(b_fir_notch, 1, ecg_fir);
+ecg_fir = filter(b_fir_lp, 1, ecg_fir);
+total_delay = (N_hp_fir + N_notch_fir + N_lp_fir) / 2;
+</code></pre>
+<h3>What <code>filter</code> does:</h3>
+<p>Implements the difference equation directly: processes the signal sample by sample, left to right. This is <strong>causal</strong> filtering — each output sample only depends on current and past inputs.</p>
+<h3>Why <code>filter</code> for FIR and not <code>filtfilt</code>?</h3>
+<ul>
+<li>FIR with symmetric coefficients already has <strong>linear phase</strong>. The waveform shape is preserved — it&#39;s just delayed.</li>
+<li>Using <code>filtfilt</code> on FIR would double the order unnecessarily and waste computation.</li>
+<li>The delay is predictable: (N)/2 samples per filter. Total = (500+500+100)/2 = <strong>550 samples ≈ 1.53 seconds</strong>.</li>
+</ul>
+<h3>IIR Cascades (Lines 60–68)</h3>
+<pre><code class="language-matlab">ecg_but = filtfilt(b_but_hp, a_but_hp, ecg);
+ecg_but = filtfilt(b_but_notch, a_but_notch, ecg_but);
+ecg_but = filtfilt(b_but_lp, a_but_lp, ecg_but);
+</code></pre>
+<h3>What <code>filtfilt</code> does:</h3>
+<ol>
+<li>Filters the signal <strong>forward</strong> (left to right) using the difference equation.</li>
+<li><strong>Reverses</strong> the output signal.</li>
+<li>Filters it <strong>again</strong> (which is effectively filtering backward).</li>
+<li>Reverses the result back to the original direction.</li>
+</ol>
+<p>The forward pass introduces phase shift φ(ω). The backward pass introduces -φ(ω). They cancel: <strong>zero total phase shift</strong>.</p>
+<h3>Why <code>filtfilt</code> for IIR and not <code>filter</code>?</h3>
+<ul>
+<li>IIR filters have <strong>non-linear phase</strong> — different frequencies get different delays. Using <code>filter</code> alone would distort the QRS waveform shape (peaks would be asymmetric, shifted, skewed).</li>
+<li><code>filtfilt</code> eliminates this phase distortion completely.</li>
+<li><strong>Trade-off</strong>: It doubles the effective order (4th order → 8th order effective) and it&#39;s <strong>offline only</strong> (you need the whole signal before you start).</li>
+</ul>
+<h3>Why cascade (HP → Notch → LP) instead of one big filter?</h3>
+<ul>
+<li>Each sub-filter targets one specific noise type. This is modular and easier to tune.</li>
+<li>Designing a single filter that does HP + Notch + LP simultaneously would require very high order and be harder to analyze.</li>
+<li>Cascading is standard practice in biomedical signal processing.</li>
+</ul>
+<hr>
+<h2>Lines 70–81: PSD and SNR Computation</h2>
+<pre><code class="language-matlab">nw = 1024;
+[pxx_raw, f_psd] = pwelch(ecg, hamming(nw), nw/2, nw, fs);
+</code></pre>
+<h3>What <code>pwelch</code> does:</h3>
+<ol>
+<li>Divides the signal into segments of <code>nw = 1024</code> samples.</li>
+<li>Each segment overlaps the previous by <code>nw/2 = 512</code> samples (50% overlap).</li>
+<li>Multiplies each segment by a <code>hamming(1024)</code> window.</li>
+<li>Computes the FFT of each windowed segment.</li>
+<li>Takes <code>|FFT|²</code> to get power.</li>
+<li>Averages all segments.</li>
+<li>Returns <code>pxx</code> (power at each frequency) and <code>f_psd</code> (frequency vector in Hz).</li>
+</ol>
+<h3>Why <code>pwelch</code> and not just <code>fft</code>?</h3>
+<p>A raw FFT of the full signal is very noisy — lots of random spikes. Welch&#39;s method averages many FFTs of overlapping segments, producing a <strong>smooth, statistically reliable</strong> PSD estimate.</p>
+<h3>SNR Calculation (Lines 77–81)</h3>
+<pre><code class="language-matlab">sb = f_psd&gt;=0.5 &amp; f_psd&lt;=40;    % signal band
+nb = (f_psd&lt;0.5) | (f_psd&gt;=49 &amp; f_psd&lt;=51) | (f_psd&gt;100);  % noise bands
+
+snr_raw = 10*log10(sum(pxx_raw(sb)) / (sum(pxx_raw(nb)) + eps));
+</code></pre>
+<ul>
+<li><code>sb</code>: Boolean mask selecting frequencies where real ECG content lives (0.5–40 Hz).</li>
+<li><code>nb</code>: Boolean mask selecting known noise frequencies.</li>
+<li><code>sum(pxx(sb))</code>: Total power in the signal band.</li>
+<li><code>sum(pxx(nb))</code>: Total power in the noise bands.</li>
+<li><code>10*log10(ratio)</code>: Converts power ratio to decibels.</li>
+<li><code>eps</code> (≈ 2.2 × 10⁻¹⁶): Prevents division by zero.</li>
+</ul>
+<hr>
+<h2>Lines 88–91: Tabbed Figure Setup</h2>
+<pre><code class="language-matlab">fig = figure(&#39;Name&#39;,&#39;ECG Denoising Results&#39;,&#39;Position&#39;,[50 50 1400 850],...
+    &#39;NumberTitle&#39;,&#39;off&#39;,&#39;Color&#39;,&#39;w&#39;);
+tg = uitabgroup(fig);
+</code></pre>
+<ul>
+<li>Creates one figure window with a <strong>tab group</strong> (like browser tabs).</li>
+<li>All 16 analysis plots are organized as tabs in this single window — no pop-up storm.</li>
+</ul>
+<hr>
+<h2>Lines 107–113: Frequency Response Plots</h2>
+<pre><code class="language-matlab">[H, f] = freqz(ball{s}{k}, aall{s}{k}, Nfft, fs);
+plot(ax, f, 20*log10(abs(H)+eps), ...);    % Magnitude
+plot(ax, f, unwrap(angle(H))*180/pi, ...); % Phase
+</code></pre>
+<h3>What <code>freqz</code> does:</h3>
+<p>Evaluates the filter&#39;s <strong>transfer function</strong> H(e^jω) at <code>Nfft</code> equally-spaced frequencies from 0 to fs/2.</p>
+<ul>
+<li><code>H</code>: Complex-valued frequency response at each frequency point.</li>
+<li><code>f</code>: Corresponding frequencies in Hz.</li>
+</ul>
+<h3>Breaking down the magnitude plot:</h3>
+<ul>
+<li><code>abs(H)</code>: Magnitude of the complex response (how much each frequency is amplified or attenuated).</li>
+<li><code>20*log10(...)</code>: Converts to decibels. In dB: 0 dB = unchanged, -20 dB = 10× weaker, -40 dB = 100× weaker.</li>
+<li><code>+eps</code>: Prevents <code>log10(0)</code> which would be -∞.</li>
+</ul>
+<h3>Breaking down the phase plot:</h3>
+<ul>
+<li><code>angle(H)</code>: Phase shift in radians at each frequency.</li>
+<li><code>unwrap(...)</code>: Removes artificial ±π jumps (without this, the phase plot would have discontinuous vertical jumps).</li>
+<li><code>*180/pi</code>: Converts radians to degrees.</li>
+</ul>
+<hr>
+<h2>Lines 118–131: Impulse and Step Response</h2>
+<pre><code class="language-matlab">imp = [1; zeros(imp_len-1,1)];  % δ[n]: a single spike
+stp = ones(imp_len,1);           % u[n]: a constant &quot;on&quot; signal
+h_i = filter(b, a, imp);         % impulse response
+h_s = filter(b, a, stp);         % step response
+</code></pre>
+<h3>Impulse response:</h3>
+<p>Feed the filter a single spike at n=0, then silence. The output IS the filter — it shows how the filter &quot;rings&quot; and decays. For FIR, the impulse response is literally the <code>b</code> coefficients themselves.</p>
+<h3>Step response:</h3>
+<p>Feed the filter a constant value of 1 forever. Shows how fast the filter reaches steady state. A good filter should settle quickly without excessive ringing.</p>
+<h3>Why use <code>filter</code> here and not <code>filtfilt</code>?</h3>
+<p>We want to see the filter&#39;s <strong>true</strong> causal behavior — how it responds to an input in real time. <code>filtfilt</code> would mask the settling behavior.</p>
+<hr>
+<h2>Lines 133–141: Pole-Zero Diagrams</h2>
+<pre><code class="language-matlab">zplane(b, a);
+</code></pre>
+<h3>What <code>zplane</code> does:</h3>
+<p>Plots the <strong>zeros</strong> (○) and <strong>poles</strong> (×) of the filter&#39;s transfer function in the complex z-plane.</p>
+<ul>
+<li><strong>Zeros</strong>: Values of z where the numerator B(z) = 0 → the filter has zero gain at these frequencies.</li>
+<li><strong>Poles</strong>: Values of z where the denominator A(z) = 0 → the filter has infinite gain at these frequencies (theoretically).</li>
+</ul>
+<h3>The unit circle (the dotted circle of radius 1):</h3>
+<ul>
+<li>Points on the unit circle correspond to real frequencies (from 0 Hz at angle=0 to fs/2 at angle=π).</li>
+<li><strong>Stability rule</strong>: ALL poles must be strictly INSIDE the unit circle. If any pole touches or crosses the unit circle, the filter is unstable (output grows to infinity).</li>
+<li>For FIR: all poles are at z=0 (the origin) → always stable.</li>
+<li>For IIR: poles are inside but not at the origin → stable but could theoretically become unstable if order is too high.</li>
+</ul>
+<hr>
+<h2>Lines 214–225: Saving Figures</h2>
+<pre><code class="language-matlab">exportgraphics(tabs(i), fullfile(figDir,[tabnames{i},&#39;.png&#39;]), &#39;Resolution&#39;,150, &#39;BackgroundColor&#39;,&#39;none&#39;);
+</code></pre>
+<ul>
+<li>Iterates through all 16 tabs, makes each one active, and exports it as a PNG.</li>
+<li><code>&#39;Resolution&#39;,150</code>: 150 DPI (decent quality for reports).</li>
+<li><code>&#39;BackgroundColor&#39;,&#39;none&#39;</code>: Transparent background.</li>
+</ul>
+<hr>
+<h2>Lines 227–238: Helper Function</h2>
+<pre><code class="language-matlab">function ax = tsubplot(parent, m, n, p)
+</code></pre>
+<p>A custom function that creates axes inside a <code>uitab</code> (since MATLAB&#39;s built-in <code>subplot</code> doesn&#39;t work directly with tabs). It calculates the position <code>[left, bottom, width, height]</code> for a grid of m rows × n columns, at position p.</p>
+
+</body>
+</html>
