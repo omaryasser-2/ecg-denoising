@@ -1,24 +1,24 @@
-/* ===== Speech Equalizer Showcase — App Logic ===== */
+/* ===== ECG Denoising Showcase — App Logic ===== */
 (function () {
     'use strict';
 
-    // Figure data
     const figures = [
-        { file: 'fig01_all_magnitudes.png', caption: 'Combined magnitude response of all 7 frequency bands (FIR Hamming filter)' },
-        { file: 'fig02_all_phases.png', caption: 'Phase response of all 7 frequency bands showing group delay characteristics' },
-        { file: 'fig03_band_0_100.png', caption: 'Band 1 (0–100 Hz): Lowpass filter — magnitude, phase, impulse, step, pole-zero' },
-        { file: 'fig04_band_100_300.png', caption: 'Band 2 (100–300 Hz): Bandpass filter — low-mid frequency warmth' },
-        { file: 'fig05_band_300_800.png', caption: 'Band 3 (300–800 Hz): Bandpass filter — mid-range body and clarity' },
-        { file: 'fig06_band_800_2k.png', caption: 'Band 4 (800–2000 Hz): Bandpass filter — upper-mid presence' },
-        { file: 'fig07_band_2k_5k.png', caption: 'Band 5 (2k–5k Hz): Bandpass filter — speech clarity range' },
-        { file: 'fig08_band_5k_10k.png', caption: 'Band 6 (5k–10k Hz): Bandpass filter — brilliance and sibilance' },
-        { file: 'fig09_band_10k_20k.png', caption: 'Band 7 (10k–20k Hz): Highpass filter — air and sparkle' },
-        { file: 'fig10_time_compare.png', caption: 'Time-domain comparison: original vs equalized signal' },
-        { file: 'fig11_freq_compare.png', caption: 'Frequency spectrum comparison: original vs equalized (FFT)' },
-        { file: 'fig12_psd.png', caption: 'Power Spectral Density comparison using Welch method' },
-        { file: 'fig13_spectrogram.png', caption: 'Spectrogram comparison: time-frequency view of original vs equalized' },
-        { file: 'fig14_fir_vs_iir.png', caption: 'FIR (Hamming) vs IIR (Butterworth) filter output comparison' },
-        { file: 'fig15_sample_rate.png', caption: 'Sample rate demonstration: original, 4× upsampled, ½ downsampled' }
+        { file: 'fig01_raw_ecg.png', caption: 'Raw ECG signals — Record 100 (Normal Sinus Rhythm) and Record 106 (Ventricular Ectopic Beats)' },
+        { file: 'fig02_fir_mag_phase.png', caption: 'FIR Hamming filter — Magnitude and Phase response for HP, Notch, and LP stages' },
+        { file: 'fig03_butter_mag_phase.png', caption: 'Butterworth IIR filter — Magnitude and Phase response for all 3 stages' },
+        { file: 'fig04_cheby2_mag_phase.png', caption: 'Chebyshev Type II filter — Magnitude and Phase response for all 3 stages' },
+        { file: 'fig05_fir_impulse_step.png', caption: 'FIR filter — Impulse and Step response for HP, Notch, and LP' },
+        { file: 'fig06_butter_impulse_step.png', caption: 'Butterworth filter — Impulse and Step response' },
+        { file: 'fig07_cheby2_impulse_step.png', caption: 'Chebyshev II filter — Impulse and Step response' },
+        { file: 'fig08_fir_polezero.png', caption: 'FIR filter — Pole-Zero plots for HP, Notch, LP (all zeros on unit circle)' },
+        { file: 'fig09_butter_polezero.png', caption: 'Butterworth filter — Pole-Zero plots (poles inside unit circle = stable)' },
+        { file: 'fig10_cheby2_polezero.png', caption: 'Chebyshev II filter — Pole-Zero plots showing zeros in stopband' },
+        { file: 'fig11_filtered_vs_raw.png', caption: 'Filtered vs Raw ECG — comparing all 3 filter outputs against original' },
+        { file: 'fig12_qrs_zoom.png', caption: 'QRS Complex preservation — zoomed view showing morphology retention after filtering' },
+        { file: 'fig13_psd_comparison.png', caption: 'Power Spectral Density (Welch) — noise reduction in frequency domain' },
+        { file: 'fig14_spectrogram.png', caption: 'Spectrogram — time-frequency analysis showing noise removal across all filters' },
+        { file: 'fig15_snr_comparison.png', caption: 'SNR comparison — quantitative improvement: Raw vs FIR vs Butterworth vs Chebyshev II' },
+        { file: 'fig16_record106.png', caption: 'Record 106 — Raw vs Butterworth filtered, preserving PVC morphology' }
     ];
 
     let currentFig = 0;
@@ -38,31 +38,26 @@
 
         tabs.forEach(t => t.classList.remove('active'));
         tabs[currentFig].classList.add('active');
-
-        // Scroll active tab into view
         tabs[currentFig].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     }
 
-    // Tab clicks
     tabs.forEach(tab => {
         tab.addEventListener('click', () => showFigure(parseInt(tab.dataset.tab)));
     });
 
-    // Nav buttons
     document.getElementById('prev-fig').addEventListener('click', () => showFigure(currentFig - 1));
     document.getElementById('next-fig').addEventListener('click', () => showFigure(currentFig + 1));
 
-    // Keyboard nav
     document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft') showFigure(currentFig - 1);
         if (e.key === 'ArrowRight') showFigure(currentFig + 1);
     });
 
-    // Load MATLAB code — use XMLHttpRequest for file:// compatibility
+    // Load MATLAB code — XMLHttpRequest works from file:// protocol
     function loadMatlabCode() {
         try {
             const xhr = new XMLHttpRequest();
-            xhr.open('GET', '../speech_equalizer.m', true);
+            xhr.open('GET', '../ecg_denoising.m', true);
             xhr.onload = function () {
                 if (xhr.status === 200 || xhr.status === 0) {
                     document.getElementById('matlab-code').textContent = xhr.responseText;
@@ -78,10 +73,10 @@
     }
     function showCodeFallback() {
         document.getElementById('matlab-code').textContent =
-            '% To view the full code here, open this page via a local server:\n' +
-            '% cd speech_equalizer/web && python -m http.server 8080\n' +
+            '% To view the full code here, open via local server:\n' +
+            '% cd web && python -m http.server 8080\n' +
             '% Then open http://localhost:8080\n\n' +
-            '% Or open speech_equalizer.m directly in MATLAB / VS Code.';
+            '% Or open ecg_denoising.m directly in MATLAB / VS Code.';
     }
     loadMatlabCode();
 
@@ -99,7 +94,7 @@
         });
     });
 
-    // Animate sections on scroll
+    // Scroll animation
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -116,6 +111,5 @@
         observer.observe(sec);
     });
 
-    // Init
     showFigure(0);
 })();

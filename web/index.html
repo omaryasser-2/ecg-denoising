@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECG Signal Denoising | DSP Project</title>
+    <meta name="description" content="ECG signal denoising for telemedicine using FIR Hamming, IIR Butterworth, and Chebyshev Type II filters — MIT-BIH Arrhythmia Database.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+
+    <!-- Hero -->
+    <header class="hero" id="hero">
+        <div class="hero-badge">
+            <i class="fas fa-microchip"></i> DSP Project — MATLAB Implementation
+        </div>
+        <h1 class="hero-title">
+            <span class="hero-icon"><i class="fas fa-heartbeat"></i></span>
+            ECG Signal <span class="gradient-text">Denoising</span>
+        </h1>
+        <p class="hero-subtitle">
+            Telemedicine-grade noise removal using FIR &amp; IIR digital filters.
+            <br>MIT-BIH Arrhythmia Database — Records 100 &amp; 106.
+        </p>
+        <div class="hero-stats">
+            <div class="stat-card">
+                <div class="stat-value">360</div>
+                <div class="stat-label">Sample Rate (Hz)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Filter Types</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">16</div>
+                <div class="stat-label">Analysis Figures</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">3</div>
+                <div class="stat-label">Noise Sources</div>
+            </div>
+        </div>
+        <a href="#figures" class="hero-cta">
+            <i class="fas fa-chart-line"></i> View Analysis
+        </a>
+    </header>
+
+    <!-- Filter Architecture -->
+    <section class="section" id="architecture">
+        <h2 class="section-title"><i class="fas fa-diagram-project"></i> Filter Pipeline</h2>
+        <p class="section-desc">Three-stage cascade filter removes baseline wander, powerline interference, and EMG noise.</p>
+        <div class="flow-diagram">
+            <div class="flow-node input-node">
+                <i class="fas fa-heartbeat"></i>
+                <span>Raw ECG</span>
+                <small>MIT-BIH 360Hz</small>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-node">
+                <i class="fas fa-arrow-up"></i>
+                <span>Highpass</span>
+                <small>0.5 Hz cutoff</small>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-node filter-node">
+                <i class="fas fa-ban"></i>
+                <span>Notch 50Hz</span>
+                <small>Powerline removal</small>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-node">
+                <i class="fas fa-arrow-down"></i>
+                <span>Lowpass</span>
+                <small>100 Hz cutoff</small>
+            </div>
+            <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+            <div class="flow-node output-node">
+                <i class="fas fa-heart"></i>
+                <span>Clean ECG</span>
+                <small>0.5–100 Hz</small>
+            </div>
+        </div>
+
+        <div class="bands-table-wrap">
+            <table class="bands-table">
+                <thead>
+                    <tr><th>Filter</th><th>Type</th><th>Order</th><th>Phase</th><th>Strength</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>FIR Hamming</td><td>Windowed-sinc</td><td>100–500 taps</td><td>Linear phase</td><td>Good stopband</td></tr>
+                    <tr><td>IIR Butterworth</td><td>All-pole</td><td>4th order</td><td>Zero-phase (filtfilt)</td><td>Maximally flat</td></tr>
+                    <tr><td>IIR Chebyshev II</td><td>Equiripple SB</td><td>4th order</td><td>Zero-phase (filtfilt)</td><td>Sharp rolloff</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Figures Gallery -->
+    <section class="section" id="figures">
+        <h2 class="section-title"><i class="fas fa-chart-area"></i> Analysis Results</h2>
+        <p class="section-desc">All 16 figures from the MATLAB analysis — navigate with tabs or arrow keys.</p>
+
+        <div class="tab-bar" id="tab-bar">
+            <button class="tab active" data-tab="0"><i class="fas fa-heartbeat"></i> Raw ECG</button>
+            <button class="tab" data-tab="1"><i class="fas fa-chart-line"></i> FIR Freq</button>
+            <button class="tab" data-tab="2"><i class="fas fa-chart-line"></i> Butter Freq</button>
+            <button class="tab" data-tab="3"><i class="fas fa-chart-line"></i> Cheby2 Freq</button>
+            <button class="tab" data-tab="4"><i class="fas fa-wave-square"></i> FIR Imp/Step</button>
+            <button class="tab" data-tab="5"><i class="fas fa-wave-square"></i> Butter Imp/Step</button>
+            <button class="tab" data-tab="6"><i class="fas fa-wave-square"></i> Cheby2 Imp/Step</button>
+            <button class="tab" data-tab="7"><i class="fas fa-circle-dot"></i> FIR P/Z</button>
+            <button class="tab" data-tab="8"><i class="fas fa-circle-dot"></i> Butter P/Z</button>
+            <button class="tab" data-tab="9"><i class="fas fa-circle-dot"></i> Cheby2 P/Z</button>
+            <button class="tab" data-tab="10"><i class="fas fa-code-compare"></i> Filtered vs Raw</button>
+            <button class="tab" data-tab="11"><i class="fas fa-magnifying-glass"></i> QRS Zoom</button>
+            <button class="tab" data-tab="12"><i class="fas fa-signal"></i> PSD</button>
+            <button class="tab" data-tab="13"><i class="fas fa-braille"></i> Spectrogram</button>
+            <button class="tab" data-tab="14"><i class="fas fa-chart-bar"></i> SNR</button>
+            <button class="tab" data-tab="15"><i class="fas fa-file-medical"></i> Record 106</button>
+        </div>
+
+        <div class="figure-viewer" id="figure-viewer">
+            <div class="figure-nav">
+                <button class="nav-btn" id="prev-fig"><i class="fas fa-chevron-left"></i></button>
+                <span class="figure-counter" id="fig-counter">1 / 16</span>
+                <button class="nav-btn" id="next-fig"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="figure-frame">
+                <img id="figure-img" src="../figures/fig01_raw_ecg.png" alt="Analysis Figure" loading="lazy">
+            </div>
+            <div class="figure-caption" id="figure-caption">
+                Raw ECG signals from MIT-BIH Records 100 (normal) and 106 (PVCs)
+            </div>
+        </div>
+    </section>
+
+    <!-- MATLAB Code -->
+    <section class="section" id="code">
+        <h2 class="section-title"><i class="fas fa-code"></i> MATLAB Source Code</h2>
+        <p class="section-desc"><code>ecg_denoising.m</code> (239 lines)</p>
+        <div class="code-toolbar">
+            <span class="code-filename"><i class="fas fa-file-code"></i> ecg_denoising.m</span>
+            <button class="copy-btn" id="copy-code"><i class="fas fa-copy"></i> Copy</button>
+        </div>
+        <div class="code-block">
+            <pre><code id="matlab-code">Loading...</code></pre>
+        </div>
+    </section>
+
+    <!-- Navigation to Speech Equalizer -->
+    <section class="section" id="nav-projects" style="text-align:center; padding-top:20px;">
+        <a href="../../speech_equalizer/web/index.html" class="hero-cta" style="display:inline-flex;">
+            <i class="fas fa-sliders-h"></i> View Speech Equalizer Project
+        </a>
+    </section>
+
+    <footer class="footer">
+        <p>ECG Signal Denoising — DSP Project &copy; 2026</p>
+        <p class="footer-sub">MIT-BIH Arrhythmia Database | MATLAB Signal Processing Toolbox</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
