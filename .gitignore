@@ -4,8 +4,6 @@
 *.slxc
 *.mex*
 *.mat
-# Figures
-figures/
 # VS Code
 .vscode/
 # Data (Optional: uncomment if you don't want to upload large data files)
